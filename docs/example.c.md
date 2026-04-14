@@ -1,6 +1,6 @@
 ```
 // C 標準函式庫
-include <xx> // 窮舉所用到的函式
+include <xx>
 
 // ESP-IDF 系統組件
 include <xx>
