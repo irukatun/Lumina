@@ -1,0 +1,5 @@
+# 將 esp_lcd 組件的 SPI IO 函式置於 IRAM，確保執行速度穩定並避免高頻讀取 flash 造成衝突崩潰
+[mapping:esp_lcd]
+archive: libesp_lcd.a
+entries:
+    esp_lcd_panel_io_spi (noflash)
