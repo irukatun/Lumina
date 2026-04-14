@@ -1,0 +1,10 @@
+dependencies:
+  idf: "=5.5.3"
+  lvgl/lvgl: "=9.5.0"
+  atanisoft/esp_lcd_ili9488: "=1.1.0"
+  k0i05/esp_mpu6050: "=1.2.7"
+  k0i05/esp_type_utils: "=1.2.7"
+  espressif/esp_lcd_touch: "=1.2.1"
+  atanisoft/esp_lcd_touch_xpt2046: "=1.0.6"
+  espressif/zlib: "=1.3.2"
+  espressif/mdns: "=1.11.0"
