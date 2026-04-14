@@ -30,7 +30,7 @@ void app_main(void)
         esp_restart();
     }
 
-    // TODO: 主畫面循環（待重構 module_main_screen）
+    // todo: 主畫面循環
     while (1)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
