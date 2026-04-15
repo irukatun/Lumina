@@ -6,6 +6,7 @@
 #include "module_boot.h"
 #include "module_nvs.h"
 #include "module_bus.h"
+#include "module_sd.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -24,6 +25,17 @@ esp_err_t module_boot_run(void)
     // 匯流排初始化
     ret = module_bus_init();
     if (ret != ESP_OK) return ret;
+
+    // SD 卡初始化
+    ret = module_sd_init();
+    if (ret != ESP_OK) return ret;
+
+    // 顯示器初始化
+    // ret = module_display_init();
+    // if (ret != ESP_OK) return ret;
+
+    // 顯示開機動畫（待 lvgl_init 實作完成後啟用）
+    // module_display_show_boot_screen();
 
     // todo: 依序執行：NVS → 匯流排 → SD → 顯示初始化 → 開機動畫 → DS3231 → MPU6050 → INMP441 → MAX98357A
 
