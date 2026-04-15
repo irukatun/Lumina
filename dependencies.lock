@@ -113,6 +113,6 @@ direct_dependencies:
 - k0i05/esp_mpu6050
 - k0i05/esp_type_utils
 - lvgl/lvgl
-manifest_hash: b00b6854df2c13b589689e3117b2c484eb4a8558b00a146b2734a5346b57a868
+manifest_hash: d828d4609262d61dcb212ec8dd8f1ba78630bc38b70ab09d672c715b34650967
 target: esp32s3
 version: 2.0.0

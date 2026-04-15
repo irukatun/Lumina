@@ -1,5 +1,8 @@
 idf_component_register(
     SRCS # 需要編譯的 .c 檔案
+        module_display.c
+        module_touch.c
+        module_lvgl.c
         module_sd.c
         module_bus.c
         module_nvs.c
@@ -11,6 +14,12 @@ idf_component_register(
         nvs_flash
         fatfs
         sdmmc
+        esp_lcd
         esp_system
+        atanisoft__esp_lcd_ili9488
+        espressif__esp_lcd_touch
+        atanisoft__esp_lcd_touch_xpt2046
+        espressif__esp_lvgl_port
+        lvgl__lvgl
     LDFRAGMENTS "esp_lcd_iram.lf" # 連結器規則
 )
