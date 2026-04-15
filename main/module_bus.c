@@ -1,8 +1,6 @@
-// ESP-IDF 系統標頭
+// ESP-IDF 系統組件
 #include <esp_log.h>
 #include <esp_err.h>
-
-// ESP-IDF 驅動
 #include <driver/spi_common.h>
 #include <driver/i2c_master.h>
 

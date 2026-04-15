@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-// ESP-IDF 系統標頭
+// ESP-IDF 系統組件
 #include <esp_err.h>
 #include <esp_log.h>
 #include <nvs_flash.h>
