@@ -9,7 +9,7 @@
 #include "module_bus.h"
 
 // 日誌標籤
-static const char *TAG = "M_bus";
+static const char *TAG = "M_Bus";
 
 // ======================================================================
 // 私有巨集

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 /**
- * @brief NVS 初始化
+ * @brief 初始化 NVS 並進行韌體版本與更新
  *
  * @return ESP_OK 成功；其他值表示初始化過程存在致命錯誤，呼叫端應重啟
  */

@@ -18,10 +18,10 @@ static const char *TAG = "M_SD";
 // 私有巨集
 // ======================================================================
 
-#define SD_FREQ_KHZ             20000   // SPI 時脈頻率
-#define SD_MAX_OPEN_FILES       5       // VFS 同時開啟檔案數上限
-#define SD_MOUNT_RETRY_COUNT    3       // 掛載重試次數
-#define SD_MOUNT_RETRY_DELAY_MS 100     // 掛載重試間隔（ms）
+#define SD_FREQ_KHZ             20000   // 20 MHz
+#define SD_MAX_OPEN_FILES       5       
+#define SD_MOUNT_RETRY_COUNT    3       
+#define SD_MOUNT_RETRY_DELAY_MS 100
 
 // ======================================================================
 // 私有變數
