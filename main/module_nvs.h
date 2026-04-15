@@ -15,11 +15,11 @@ esp_err_t module_nvs_init(void);
  *
  * @return true 偵測到版本更新；false 版本未變更
  */
-bool module_nvs_ver_updated(void);
+bool module_nvs_is_ver_updated(void);
 
 /**
  * @brief 查詢 NVS 是否因損毀而被重置
  *
  * @return true 表示 NVS 被重置；false 表示 NVS 正常
  */
-bool module_nvs_reset(void);
+bool module_nvs_is_reset(void);

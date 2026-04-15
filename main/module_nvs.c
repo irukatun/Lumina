@@ -129,12 +129,12 @@ esp_err_t module_nvs_init(void)
 }
 
 // 供外部查詢版本是否更新的 API
-bool module_nvs_ver_updated(void)
+bool module_nvs_is_ver_updated(void)
 {
     return s_ver_updated;
 }
 // 供外部查詢 NVS 是否被重置的 API
-bool module_nvs_reset(void)
+bool module_nvs_is_reset(void)
 {
     return s_nvs_reset;
 }
