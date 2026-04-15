@@ -38,7 +38,7 @@
 
 ---
 ### 函式命名規則
-#### 公開 API 一律以 `m_<模組名>_<功能>`
+#### 公開 API 一律以 `module_<模組名>_<功能>`
 範例: `module_boot_run` `module_nvs_init`
 
 ---
