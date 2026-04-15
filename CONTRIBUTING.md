@@ -5,7 +5,7 @@
 1. 下載並安裝 [Git](https://git-scm.com/)
 2. 下載並安裝 [VS Code](https://code.visualstudio.com)
 3. 安裝 [ESP-IDF 擴充套件](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension)
-4. 打開 ESP-IDF 安裝管理器，安裝 **ESP-IDF v5.3.3**
+4. 打開 ESP-IDF 安裝管理器，安裝 **ESP-IDF v5.5.3**
 5. Clone 專案
 
 ```bash
