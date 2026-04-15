@@ -63,6 +63,7 @@
 | MOSI | GPIO 2 |
 | MISO | GPIO 42 |
 | CS | GPIO 4 |
+> 目前使用的 SD 模組帶有單向電位轉換器，不支援 SDMMC 原生雙向 CMD，只能使用 SPI 模式
 
 | DS3231 | GPIO |
 |-----------|------|
