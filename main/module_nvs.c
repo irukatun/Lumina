@@ -18,7 +18,7 @@ static const char *TAG = "M_NVS";
 // 私有變數
 // ======================================================================
 
-static bool s_nvs_reset        = false; // NVS 因損毀而被自動清除的旗標
+static bool s_nvs_reset = false; // NVS 因損毀而被自動清除的旗標
 static bool s_ver_updated = false; // 本次開機偵測到韌體版本更新的旗標
 
 // ======================================================================

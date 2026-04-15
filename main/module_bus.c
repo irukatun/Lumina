@@ -8,6 +8,7 @@
 #include "board.h"
 #include "module_bus.h"
 
+// 日誌標籤
 static const char *TAG = "M_bus";
 
 // ======================================================================
