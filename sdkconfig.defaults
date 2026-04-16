@@ -22,6 +22,12 @@ CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
 # ── FreeRTOS：Tick Rate 1000Hz（解析度 1ms）────────────
 CONFIG_FREERTOS_HZ=1000
 
+# ── WiFi Buffer ───────────────────────────────────────
+# TX 改為動態分配，閒置時不占用以節省 SRAM
+# RX 維持官方預設，不為小幅節省引入封包遺失風險
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER=y
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=32
+
 # ── BLE：NimBLE（輕量堆疊，僅用於 BLE Provisioning）────
 # 配網完成後需釋放 BLE 資源，注意符合 NimBLE 釋放方式
 CONFIG_BT_ENABLED=y
