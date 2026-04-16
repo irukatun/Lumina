@@ -74,7 +74,7 @@ static esp_err_t panel_init(void)
         .dc_gpio_num         = CONFIG_GPIO_ILI9488_DC,
         .spi_mode            = 0,
         .pclk_hz             = 60000000,    // 60 MHz，SPI2 IOMUX 腳位最高速
-        .trans_queue_depth   = 10,          // 320 / 32 = 10，剛好容納一幀
+        .trans_queue_depth   = 10,
         .on_color_trans_done = NULL,
         .user_ctx            = NULL,
         .lcd_cmd_bits        = 8,
@@ -93,7 +93,7 @@ static esp_err_t panel_init(void)
         .bits_per_pixel = 18, // RGB666
         .flags          = { .reset_active_high = 0 }, // RESET 拉低觸發
     };
-    ret = esp_lcd_new_panel_ili9488(s_io_handle, &panel_cfg, CONFIG_ILI9488_WIDTH * 32, &s_panel_handle);
+    ret = esp_lcd_new_panel_ili9488(s_io_handle, &panel_cfg, CONFIG_ILI9488_WIDTH * 16, &s_panel_handle);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "面板建立失敗: %s", esp_err_to_name(ret));
         return ret;

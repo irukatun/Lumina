@@ -51,14 +51,14 @@ esp_err_t module_lvgl_init(void)
     const lvgl_port_display_cfg_t disp_cfg = {
         .io_handle     = module_display_io_handle(),
         .panel_handle  = module_display_panel_handle(),
-        .buffer_size   = CONFIG_ILI9488_WIDTH * 32,  // 對齊 SPI 單次最大傳輸（480×32×RGB666=46080 bytes）
+        .buffer_size   = CONFIG_ILI9488_WIDTH * 16,  // 對齊 SPI 單次最大傳輸（480×16×RGB888=23040 bytes）
         .double_buffer = true,
         .hres          = CONFIG_ILI9488_WIDTH,
         .vres          = CONFIG_ILI9488_HEIGHT,
         .monochrome    = false,
         .color_format  = LV_COLOR_FORMAT_RGB565,
         .rotation      = { .swap_xy = 0, .mirror_x = 0, .mirror_y = 0 },  // 已在 panel_init 設定
-        .flags         = { .buff_dma = true },
+        .flags         = { .buff_dma = false },
     };
     s_lvgl_display = lvgl_port_add_disp(&disp_cfg);
     if (s_lvgl_display == NULL) {

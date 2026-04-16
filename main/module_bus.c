@@ -15,7 +15,7 @@ static const char *TAG = "M_Bus";
 // 私有巨集
 // ======================================================================
 
-#define SPI2_MAX_TRANSFER_SZ    46080   // 對齊 ILI9488 480寬×32行×RGB888
+#define SPI2_MAX_TRANSFER_SZ    23040   // 對齊 ILI9488 480寬×16行×RGB888
 #define SPI3_MAX_TRANSFER_SZ    32768   // 對齊 SD FAT32 32KB cluster（64 扇區）
 
 // ======================================================================
