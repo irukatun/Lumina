@@ -1,4 +1,6 @@
 // ESP-IDF 系統組件
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <esp_log.h>
 #include <esp_err.h>
 #include <esp_heap_caps.h>
@@ -11,6 +13,7 @@
 #include "module_display.h"
 #include "module_touch.h"
 #include "module_lvgl.h"
+#include "module_ui_boot.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -63,11 +66,26 @@ esp_err_t module_boot_run(void)
     if (ret != ESP_OK) return ret;
     LOG_HEAP();
 
-    // 顯示開機動畫（待 module_ui_boot 實作完成後啟用）
-    // module_ui_boot_show();
+    // 顯示開機畫面
+    module_ui_boot_show();
+    LOG_HEAP();
+    
+    // TODO: 以下各模組加入後，將 vTaskDelay 移除，set_progress 移至各 init 完成後
+    // DS3231:   module_ds3231_init();   module_ui_boot_set_progress(25);
+    // MPU6050:  module_mpu6050_init();  module_ui_boot_set_progress(50);
+    // INMP441:  module_inmp441_init();  module_ui_boot_set_progress(75);
+    // MAX98357: module_max98357_init(); module_ui_boot_set_progress(100);
 
-    // todo: 依序執行：NVS → 匯流排 → SD → 顯示初始化 → 開機動畫 → DS3231 → MPU6050 → INMP441 → MAX98357A
-
+    // 尚未實作前的假等待模擬
+    vTaskDelay(pdMS_TO_TICKS(200));
+    module_ui_boot_set_progress(25);
+    vTaskDelay(pdMS_TO_TICKS(600));
+    module_ui_boot_set_progress(55);
+    vTaskDelay(pdMS_TO_TICKS(400));
+    module_ui_boot_set_progress(75);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    module_ui_boot_set_progress(100);
+    vTaskDelay(pdMS_TO_TICKS(1000));
     ESP_LOGI(TAG, "=====系統啟動完成=====");
     return ESP_OK;
 }
