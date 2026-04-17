@@ -33,7 +33,7 @@ esp_err_t module_lvgl_init(void)
 {
     ESP_LOGI(TAG, "LVGL 正在初始化");
 
-    // 步驟 1：初始化 esp_lvgl_port，建立 LVGL task 與 tick timer
+    // 初始化 esp_lvgl_port，建立 LVGL task 與 tick timer
     const lvgl_port_cfg_t port_cfg = {
         .task_priority     = 4,
         .task_stack        = 8192,
@@ -47,7 +47,7 @@ esp_err_t module_lvgl_init(void)
         return ret;
     }
     ESP_LOGI(TAG, "LVGL 正在連接至 ILI9488");
-    // 步驟 2：建立 LVGL display，連接 ILI9488 panel
+    // 建立 LVGL display，連接 ILI9488 panel
     const lvgl_port_display_cfg_t disp_cfg = {
         .io_handle     = module_display_io_handle(),
         .panel_handle  = module_display_panel_handle(),
@@ -57,7 +57,7 @@ esp_err_t module_lvgl_init(void)
         .vres          = CONFIG_ILI9488_HEIGHT,
         .monochrome    = false,
         .color_format  = LV_COLOR_FORMAT_RGB565,
-        .rotation      = { .swap_xy = 0, .mirror_x = 0, .mirror_y = 0 },  // 已在 panel_init 設定
+        .rotation      = { .swap_xy = 1, .mirror_x = 1, .mirror_y = 0 },
         .flags         = { .buff_dma = false },
     };
     s_lvgl_display = lvgl_port_add_disp(&disp_cfg);
@@ -67,7 +67,7 @@ esp_err_t module_lvgl_init(void)
     }
 
     ESP_LOGI(TAG, "LVGL 正在連接至 XPT2046");
-    // 步驟 3：建立 LVGL 輸入裝置，連接 XPT2046 觸控
+    // 建立 LVGL 輸入裝置，連接 XPT2046 觸控
     const lvgl_port_touch_cfg_t touch_cfg = {
         .disp   = s_lvgl_display,
         .handle = module_touch_handle(),
