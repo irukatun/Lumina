@@ -128,6 +128,29 @@ esp_err_t module_nvs_init(void)
     return ESP_OK;
 }
 
+// 讀取指定 namespace / key 的 u8 值
+esp_err_t module_nvs_get_u8(const char *ns, const char *key, uint8_t *out)
+{
+    nvs_handle_t handle;
+    esp_err_t ret = nvs_open(ns, NVS_READONLY, &handle);
+    if (ret != ESP_OK) return ret;
+    ret = nvs_get_u8(handle, key, out);
+    nvs_close(handle);
+    return ret;
+}
+
+// 寫入指定 namespace / key 的 u8 值
+esp_err_t module_nvs_set_u8(const char *ns, const char *key, uint8_t value)
+{
+    nvs_handle_t handle;
+    esp_err_t ret = nvs_open(ns, NVS_READWRITE, &handle);
+    if (ret != ESP_OK) return ret;
+    ret = nvs_set_u8(handle, key, value);
+    if (ret == ESP_OK) ret = nvs_commit(handle);
+    nvs_close(handle);
+    return ret;
+}
+
 // 供外部查詢版本是否更新的 API
 bool module_nvs_is_ver_updated(void)
 {

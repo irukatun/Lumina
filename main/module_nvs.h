@@ -2,6 +2,7 @@
 
 #include <esp_err.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
  * @brief 初始化 NVS 並進行韌體版本與更新
@@ -9,6 +10,9 @@
  * @return ESP_OK 成功；其他值表示初始化過程存在致命錯誤，呼叫端應重啟
  */
 esp_err_t module_nvs_init(void);
+
+esp_err_t module_nvs_get_u8(const char *ns, const char *key, uint8_t *out);
+esp_err_t module_nvs_set_u8(const char *ns, const char *key, uint8_t value);
 
 /**
  * @brief 查詢本次開機是否偵測到韌體版本更新
