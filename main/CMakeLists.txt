@@ -1,5 +1,6 @@
 idf_component_register(
     SRCS # 需要編譯的 .c 檔案
+        module_imu.c
         module_time.c
         module_ui_boot.c
         module_display.c
@@ -23,5 +24,6 @@ idf_component_register(
         atanisoft__esp_lcd_touch_xpt2046
         espressif__esp_lvgl_port
         lvgl__lvgl
+        k0i05__esp_mpu6050
     LDFRAGMENTS "esp_lcd_iram.lf" # 連結器規則
 )
