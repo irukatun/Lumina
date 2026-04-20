@@ -66,22 +66,11 @@ static esp_err_t mpu6050_device_init(void)
         .gyro_clock_source      = MPU6050_GYRO_CS_PLL_X_AXIS_REF,
         .gyro_full_scale_range  = MPU6050_GYRO_FS_RANGE_500DPS,
         .accel_full_scale_range = MPU6050_ACCEL_FS_RANGE_4G,
-        .irq_io_num             = CONFIG_GPIO_MPU6050_INT,
-        .irq_io_active_level    = MPU6050_IRQ_PIN_ACTIVE_HIGH,
-        .irq_io_mode            = MPU6050_IRQ_PIN_PUSH_PULL,
-        .irq_latch              = MPU6050_IRQ_LATCH_50US,
-        .irq_clear_behavior     = MPU6050_IRQ_CLEAR_ON_ANY_READ,
     };
 
     esp_err_t ret = mpu6050_init(module_bus_i2c0_handle(), &config, &s_mpu6050_handle);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "MPU6050 初始化失敗: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = mpu6050_configure_interrupts(s_mpu6050_handle, &config);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "MPU6050 中斷腳位設定失敗: %s", esp_err_to_name(ret));
         return ret;
     }
 
