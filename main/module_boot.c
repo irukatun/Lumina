@@ -16,6 +16,7 @@
 #include "module_ui_boot.h"
 #include "module_time.h"
 #include "module_imu.h"
+#include "module_pir.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -73,16 +74,19 @@ esp_err_t module_boot_run(void)
     module_display_backlight_set(100);
     LOG_HEAP();
     
-    // DS3231 初始化
-    ret = module_time_init();
-    if (ret != ESP_OK) return ret;
+    // DS3231 初始化（非關鍵，失敗不中斷啟動）
+    module_time_init();
     module_ui_boot_set_progress(25);
     LOG_HEAP();
 
-    // IMU 初始化
-    ret = module_imu_init();
-    if (ret != ESP_OK) return ret;
+    // IMU 初始化（非關鍵，失敗不中斷啟動）
+    module_imu_init();
     module_ui_boot_set_progress(50);
+    LOG_HEAP();
+
+    // PIR 初始化（非關鍵，失敗不中斷啟動）
+    module_pir_init();
+    module_ui_boot_set_progress(60);
     LOG_HEAP();
 
     // TODO: 以下各模組加入後，set_progress 移至各 init 完成後

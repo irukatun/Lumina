@@ -1,5 +1,6 @@
 idf_component_register(
     SRCS # 需要編譯的 .c 檔案
+        module_pir.c
         module_imu.c
         module_time.c
         module_ui_boot.c
