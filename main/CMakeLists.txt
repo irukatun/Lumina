@@ -1,5 +1,10 @@
 idf_component_register(
     SRCS # 需要編譯的 .c 檔案
+        fonts/font_huninn_14.c
+        fonts/font_huninn_18.c
+        fonts/font_huninn_24.c
+        fonts/font_huninn_32.c
+        fonts/font_huninn_48.c
         module_pir.c
         module_imu.c
         module_time.c
@@ -12,7 +17,7 @@ idf_component_register(
         module_nvs.c
         module_boot.c
         main.c
-    INCLUDE_DIRS "." # 讓 #include "xxx.h" 能找到 main/ 內的 .h
+    INCLUDE_DIRS "." "fonts" # 讓 #include "xxx.h" 能找到 main/ 與 main/fonts/ 內的 .h
     REQUIRES # 依賴的 IDF 內建組件與第三方組件
         driver
         nvs_flash

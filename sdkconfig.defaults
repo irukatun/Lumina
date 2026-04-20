@@ -40,6 +40,5 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
 
 # ── LVGL 字體 ──────────────────────────────────────────
-# 預設只有 Montserrat 14，UI 模組額外需要以下尺寸
-CONFIG_LV_FONT_MONTSERRAT_16=y
-CONFIG_LV_FONT_MONTSERRAT_32=y
+# 保留 Montserrat 14 作為 LVGL default font（必要 fallback）
+# 自訂字體使用 main/fonts/ 內的粉圓字體
