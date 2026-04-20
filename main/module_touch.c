@@ -18,10 +18,9 @@ static const char *TAG = "M_Touch";
 // ======================================================================
 // 私有巨集
 // ======================================================================
-// 壓力過濾與座標校準(需要根據不同螢幕實際情況修改)
-#define TOUCH_PRESSURE_MIN      500        // 低於此值視為雜訊（實測值）
-#define TOUCH_CAL_X_MIN         200        // X 軸校準最小 ADC 值（實測值）
-#define TOUCH_CAL_X_MAX         3820       // X 軸校準最大 ADC 值（實測值）
+// 座標校準（需要根據不同螢幕實際情況修改）
+#define TOUCH_CAL_X_MIN         -32        // X 軸校準最小 ADC 值（實測校準）
+#define TOUCH_CAL_X_MAX         4006       // X 軸校準最大 ADC 值（實測校準）
 #define TOUCH_CAL_Y_MIN         170        // Y 軸校準最小 ADC 值（實測值）
 #define TOUCH_CAL_Y_MAX         3840       // Y 軸校準最大 ADC 值（實測值）
 
@@ -45,12 +44,6 @@ static esp_err_t xpt2046_init(void);
 static void touch_calibrate(esp_lcd_touch_handle_t tp, uint16_t *x, uint16_t *y, uint16_t *strength, uint8_t *point_num, uint8_t max_point_num)
 {
     for (uint8_t i = 0; i < *point_num; i++) {
-        // 壓力不足視為雜訊，丟棄所有點
-        if (strength[i] < TOUCH_PRESSURE_MIN) {
-            *point_num = 0;
-            return;
-        }
-
         // 還原近似原始 ADC 值（驅動已線性映射至 [0, x_max]）
         uint32_t raw_x = (uint32_t)x[i] * 4096 / tp->config.x_max;
         uint32_t raw_y = (uint32_t)y[i] * 4096 / tp->config.y_max;
@@ -99,7 +92,7 @@ static esp_err_t xpt2046_init(void)
         .x_max               = CONFIG_ILI9488_HEIGHT,  // swap_xy 後 x 對應高度
         .y_max               = CONFIG_ILI9488_WIDTH,   // swap_xy 後 y 對應寬度
         .rst_gpio_num        = GPIO_NUM_NC,
-        .int_gpio_num        = CONFIG_GPIO_XPT2046_IRQ,
+        .int_gpio_num        = GPIO_NUM_NC,
         .levels              = { .reset = 0, .interrupt = 0 },
         .flags               = { .swap_xy = 1, .mirror_x = 1, .mirror_y = 1 },
         .process_coordinates = touch_calibrate,
@@ -126,6 +119,7 @@ esp_err_t module_touch_init(void)
 
     ret = xpt2046_init();
     if (ret != ESP_OK) return ret;
+
 
     ESP_LOGI(TAG, "觸控初始化完成");
     return ESP_OK;
