@@ -4,6 +4,11 @@
 #include <esp_err.h>
 
 typedef enum {
+    MODULE_IMU_STATUS_OK,
+    MODULE_IMU_STATUS_ERROR,
+} module_imu_status_t;
+
+typedef enum {
     IMU_EVENT_TAP,
     IMU_EVENT_SHAKE_START,
     IMU_EVENT_SHAKE_END,
@@ -17,6 +22,13 @@ typedef void (*imu_event_cb_t)(imu_event_t event);
  * @return ESP_OK 成功；其他值表示初始化過程存在致命錯誤，呼叫端應重啟
  */
 esp_err_t module_imu_init(void);
+
+/**
+ * @brief 查詢 IMU 初始化狀態
+ *
+ * @return module_imu_status_t
+ */
+module_imu_status_t module_imu_get_status(void);
 
 /**
  * @brief 新增 IMU 事件 callback（最多 4 個）

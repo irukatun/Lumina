@@ -41,9 +41,10 @@ static const char *TAG = "M_IMU";
 // ======================================================================
 // 私有變數
 // ======================================================================
-static mpu6050_handle_t s_mpu6050_handle        = NULL;
-static imu_event_cb_t   s_event_cbs[4]          = {NULL};
-static TaskHandle_t     s_imu_task_handle        = NULL;
+static mpu6050_handle_t     s_mpu6050_handle    = NULL;
+static imu_event_cb_t       s_event_cbs[4]      = {NULL};
+static TaskHandle_t         s_imu_task_handle   = NULL;
+static module_imu_status_t  s_status            = MODULE_IMU_STATUS_ERROR;
 
 // ======================================================================
 // 私有函式前向宣告
@@ -193,8 +194,14 @@ esp_err_t module_imu_init(void)
 
     xTaskCreate(imu_task, "imu_task", IMU_TASK_STACK_SIZE, NULL, IMU_TASK_PRIORITY, &s_imu_task_handle);
 
+    s_status = MODULE_IMU_STATUS_OK;
     ESP_LOGI(TAG, "IMU 初始化完成");
     return ESP_OK;
+}
+
+module_imu_status_t module_imu_get_status(void)
+{
+    return s_status;
 }
 
 // 新增 IMU 事件 callback
