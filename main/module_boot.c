@@ -69,24 +69,29 @@ esp_err_t module_boot_run(void)
     if (ret != ESP_OK) return ret;
     LOG_HEAP();
 
-    // 顯示開機畫面
+    // 顯示開機畫面（含背光淡入與進度條淡入，阻塞）
     module_ui_boot_show();
-    module_display_backlight_set(100);
     LOG_HEAP();
     
     // DS3231 初始化（非關鍵，失敗不中斷啟動）
+    module_ui_boot_set_status("正在初始化時鐘模組...");
     module_time_init();
     module_ui_boot_set_progress(25);
+    vTaskDelay(pdMS_TO_TICKS(500));
     LOG_HEAP();
 
     // IMU 初始化（非關鍵，失敗不中斷啟動）
+    module_ui_boot_set_status("正在初始化運動感測器...");
     module_imu_init();
     module_ui_boot_set_progress(50);
+    vTaskDelay(pdMS_TO_TICKS(500));
     LOG_HEAP();
 
     // PIR 初始化（非關鍵，失敗不中斷啟動）
+    module_ui_boot_set_status("正在初始化人體感測器...");
     module_pir_init();
     module_ui_boot_set_progress(60);
+    vTaskDelay(pdMS_TO_TICKS(200));
     LOG_HEAP();
 
     // TODO: 以下各模組加入後，set_progress 移至各 init 完成後
@@ -94,11 +99,17 @@ esp_err_t module_boot_run(void)
     // MAX98357: module_max98357_init(); module_ui_boot_set_progress(100);
 
     // 尚未實作前的假等待模擬
-    vTaskDelay(pdMS_TO_TICKS(600));
+    module_ui_boot_set_status("正在初始化音訊模組...");
     module_ui_boot_set_progress(75);
-    vTaskDelay(pdMS_TO_TICKS(400));
+    vTaskDelay(pdMS_TO_TICKS(700));
+    module_ui_boot_set_status("正在載入主介面...");
+    module_ui_boot_set_progress(95);
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    module_ui_boot_set_status("啟動完成");
     module_ui_boot_set_progress(100);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(500));
+    module_ui_boot_set_complete();
+    vTaskDelay(pdMS_TO_TICKS(1200));
     ESP_LOGI(TAG, "=====系統啟動完成=====");
     return ESP_OK;
 }
