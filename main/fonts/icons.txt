@@ -1,0 +1,15 @@
+# Material Symbols (Outlined) 圖示清單
+# 一行一個 icon 名稱，查表網站：https://fonts.google.com/icons
+# codepoints 由 script 從官方 .codepoints 檔自動解析
+
+# WiFi 訊號強度（0~4 格）
+signal_wifi_0_bar
+network_wifi_1_bar
+network_wifi_2_bar
+network_wifi_3_bar
+signal_wifi_4_bar
+
+# 藍牙
+bluetooth
+bluetooth_connected
+bluetooth_disabled
