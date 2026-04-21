@@ -13,6 +13,9 @@ idf_component_register(
         module_ui_main.c
         module_ui_alarm.c
         module_wifi.c
+        module_prov.c
+        module_network.c
+        module_ui_network.c
         module_display.c
         module_touch.c
         module_lvgl.c
@@ -38,5 +41,6 @@ idf_component_register(
         esp_wifi
         esp_netif
         esp_event
+        wifi_provisioning
     LDFRAGMENTS "esp_lcd_iram.lf" # 連結器規則
 )
