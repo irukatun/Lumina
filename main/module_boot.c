@@ -17,6 +17,7 @@
 #include "module_time.h"
 #include "module_imu.h"
 #include "module_pir.h"
+#include "module_wifi.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -94,8 +95,15 @@ esp_err_t module_boot_run(void)
     vTaskDelay(pdMS_TO_TICKS(200));
     LOG_HEAP();
 
+    // WiFi 初始化（非關鍵，失敗不中斷啟動）
+    module_ui_boot_set_status("正在初始化網路模組...");
+    module_wifi_init();
+    module_ui_boot_set_progress(70);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    LOG_HEAP();
+
     // TODO: 以下各模組加入後，set_progress 移至各 init 完成後
-    // INMP441:  module_inmp441_init();  module_ui_boot_set_progress(75);
+    // INMP441:  module_inmp441_init();  module_ui_boot_set_progress(85);
     // MAX98357: module_max98357_init(); module_ui_boot_set_progress(100);
 
     // 尚未實作前的假等待模擬
