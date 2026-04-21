@@ -7,6 +7,7 @@
 
 // 本專案模組
 #include "module_boot.h"
+#include "module_ui_main.h"
 
 // 日誌標籤
 static const char *TAG = "Main";
@@ -29,6 +30,8 @@ void app_main(void)
         vTaskDelay(pdMS_TO_TICKS(10000)); // 等待 10 秒以便觀察錯誤訊息
         esp_restart();
     }
+
+    module_ui_main_show();
 
     while (1)
     {
