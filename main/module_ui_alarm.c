@@ -9,12 +9,14 @@
 #include "fonts/fonts.h"
 #include "module_ui_alarm.h"
 
+// 日誌標籤
 static const char *TAG = "M_UI_Alarm";
 
 // ======================================================================
-// 版面尺寸
+// 私有巨集
 // ======================================================================
 
+// 版面尺寸
 #define PANEL_W         400
 #define PANEL_H         260
 #define HEADER_H        36
@@ -25,20 +27,21 @@ static const char *TAG = "M_UI_Alarm";
 #define DONE_BTN_H      36
 
 // ======================================================================
-// 私有變數
+// 私有型別
 // ======================================================================
 
-static lv_obj_t *s_backdrop = NULL;
-
-// ======================================================================
-// Mock 資料（實際鬧鐘邏輯尚未實作）
-// ======================================================================
-
+// Mock 鬧鐘資料（實際鬧鐘邏輯尚未實作）
 typedef struct {
     const char *time;
     const char *label;
     bool        enabled;
 } mock_alarm_t;
+
+// ======================================================================
+// 私有變數
+// ======================================================================
+
+static lv_obj_t *s_backdrop = NULL;
 
 static const mock_alarm_t MOCK_ALARMS[] = {
     { "07:30", "工作日",     true  },
@@ -48,9 +51,22 @@ static const mock_alarm_t MOCK_ALARMS[] = {
 static const int MOCK_ALARM_COUNT = sizeof(MOCK_ALARMS) / sizeof(MOCK_ALARMS[0]);
 
 // ======================================================================
-// 事件 callback（mock — 只記錄日誌，不實際變更狀態）
+// 私有函式前向宣告
 // ======================================================================
 
+static void backdrop_click_cb(lv_event_t *e);
+static void done_click_cb(lv_event_t *e);
+static void add_click_cb(lv_event_t *e);
+static void item_click_cb(lv_event_t *e);
+static void delete_click_cb(lv_event_t *e);
+static void switch_change_cb(lv_event_t *e);
+static void build_alarm_item(lv_obj_t *parent, int idx, const mock_alarm_t *a);
+
+// ======================================================================
+// 私有函式實作
+// ======================================================================
+
+// 事件 callback（mock — 只記錄日誌，不實際變更狀態）
 static void backdrop_click_cb(lv_event_t *e)
 {
     if (lv_event_get_target(e) != s_backdrop) return;
@@ -90,10 +106,6 @@ static void switch_change_cb(lv_event_t *e)
     ESP_LOGI(TAG, "[mock] 鬧鐘 %d (%s) 切換為 %s",
              idx, MOCK_ALARMS[idx].time, on ? "開" : "關");
 }
-
-// ======================================================================
-// 私有建構函式
-// ======================================================================
 
 static void build_alarm_item(lv_obj_t *parent, int idx, const mock_alarm_t *a)
 {

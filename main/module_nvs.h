@@ -11,7 +11,24 @@
  */
 esp_err_t module_nvs_init(void);
 
+/**
+ * @brief 讀取指定 namespace / key 的 u8 值
+ *
+ * @param ns  namespace
+ * @param key key
+ * @param[out] out 讀取結果
+ * @return ESP_OK 成功；ESP_ERR_NVS_NOT_FOUND 表示 key 不存在
+ */
 esp_err_t module_nvs_get_u8(const char *ns, const char *key, uint8_t *out);
+
+/**
+ * @brief 寫入指定 namespace / key 的 u8 值（自動 commit）
+ *
+ * @param ns    namespace
+ * @param key   key
+ * @param value 寫入值
+ * @return ESP_OK 成功
+ */
 esp_err_t module_nvs_set_u8(const char *ns, const char *key, uint8_t value);
 
 /**

@@ -12,6 +12,7 @@
 #include "module_nvs.h"
 #include "board.h"
 
+// 日誌標籤
 static const char *TAG = "M_NVS";
 
 // ======================================================================

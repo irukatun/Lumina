@@ -1,6 +1,8 @@
+// C 標準函式庫
+#include <stdio.h>
+
 // ESP-IDF 系統組件
 #include <esp_log.h>
-#include <stdio.h>
 
 // 第三方組件
 #include <lvgl.h>
@@ -19,12 +21,8 @@
 static const char *TAG = "M_UI_Main";
 
 // ======================================================================
-// 私有常數
+// 私有巨集
 // ======================================================================
-
-static const char *WEEKDAY_STR[] = {
-    "", "週日", "週一", "週二", "週三", "週四", "週五", "週六"
-};
 
 // 版面尺寸
 #define STATUS_BAR_H    24
@@ -49,6 +47,10 @@ static const char *WEEKDAY_STR[] = {
 // ======================================================================
 // 私有變數
 // ======================================================================
+
+static const char *WEEKDAY_STR[] = {
+    "", "週日", "週一", "週二", "週三", "週四", "週五", "週六"
+};
 
 static lv_obj_t  *s_scr             = NULL;
 
@@ -432,7 +434,8 @@ void module_ui_main_show(void)
     // ------------------------------------------------------------------
     // 切換至主畫面（淡入 400ms）
     // ------------------------------------------------------------------
-    lv_screen_load_anim(s_scr, LV_SCR_LOAD_ANIM_FADE_IN, 400, 0, false);
+    // auto_del=true：LVGL 在動畫結束時釋放前一個 screen（網路設定畫面）
+    lv_screen_load_anim(s_scr, LV_SCR_LOAD_ANIM_FADE_IN, 400, 0, true);
 
     s_clock_timer = lv_timer_create(clock_timer_cb, 1000, NULL);
 

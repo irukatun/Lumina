@@ -17,13 +17,14 @@ static const char *TAG = "M_PIR";
 // ======================================================================
 #define PIR_TASK_STACK_SIZE     2048
 #define PIR_TASK_PRIORITY       5
+#define MAX_CALLBACKS           10
 
 // ======================================================================
 // 私有變數
 // ======================================================================
-static pir_event_cb_t   s_event_cbs[4]      = {NULL};
-static TaskHandle_t     s_pir_task_handle    = NULL;
-static volatile bool    s_detected           = false;
+static pir_event_cb_t   s_event_cbs[MAX_CALLBACKS]  = {NULL};
+static TaskHandle_t     s_pir_task_handle           = NULL;
+static volatile bool    s_detected                  = false;
 
 // ======================================================================
 // 私有函式前向宣告
@@ -47,7 +48,7 @@ static void pir_task(void *arg)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         s_detected = gpio_get_level(CONFIG_GPIO_PIR_OUTPUT);
         pir_event_t event = s_detected ? PIR_EVENT_DETECTED : PIR_EVENT_CLEARED;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MAX_CALLBACKS; i++) {
             if (s_event_cbs[i] != NULL) s_event_cbs[i](event);
         }
     }
@@ -91,7 +92,7 @@ esp_err_t module_pir_init(void)
     }
 
     s_detected = gpio_get_level(CONFIG_GPIO_PIR_OUTPUT);
-    ESP_LOGI(TAG, "PIR 初始化完成， INVALID_STATE 代表其他模組已安裝，可安全忽略");
+    ESP_LOGI(TAG, "PIR 初始化完成");
     return ESP_OK;
 }
 
@@ -103,7 +104,7 @@ bool module_pir_is_detected(void)
 // 新增 PIR 事件 callback
 void module_pir_add_callback(pir_event_cb_t cb)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < MAX_CALLBACKS; i++) {
         if (s_event_cbs[i] == NULL) {
             s_event_cbs[i] = cb;
             return;
@@ -115,7 +116,7 @@ void module_pir_add_callback(pir_event_cb_t cb)
 // 移除 PIR 事件 callback
 void module_pir_remove_callback(pir_event_cb_t cb)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < MAX_CALLBACKS; i++) {
         if (s_event_cbs[i] == cb) {
             s_event_cbs[i] = NULL;
             return;

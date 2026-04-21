@@ -1,5 +1,7 @@
-// ESP-IDF 系統組件
+// C 標準函式庫
 #include <string.h>
+
+// ESP-IDF 系統組件
 #include <esp_log.h>
 #include <esp_wifi.h>
 #include <esp_netif.h>
@@ -9,13 +11,14 @@
 // 本專案模組
 #include "module_wifi.h"
 
+// 日誌標籤
 static const char *TAG = "M_WiFi";
 
 // ======================================================================
-// 私有常數
+// 私有巨集
 // ======================================================================
 
-#define MAX_CALLBACKS   8
+#define MAX_CALLBACKS   10
 #define MAX_RETRY       5
 
 // ======================================================================
@@ -30,7 +33,15 @@ static int                    s_retry_count    = 0;
 static bool                   s_started        = false;
 
 // ======================================================================
-// 私有函式
+// 私有函式前向宣告
+// ======================================================================
+
+static void fire_callbacks(module_wifi_event_t event);
+static void wifi_event_handler(void *arg, esp_event_base_t base,
+                                int32_t event_id, void *data);
+
+// ======================================================================
+// 私有函式實作
 // ======================================================================
 
 static void fire_callbacks(module_wifi_event_t event)
@@ -53,8 +64,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t base,
             ESP_LOGI(TAG, "重試連線 (%d/%d)", s_retry_count, MAX_RETRY);
             esp_wifi_connect();
         } else if (s_retry_count >= MAX_RETRY) {
-            ESP_LOGW(TAG, "連線失敗，等待 provisioning（尚未實作）");
-            // TODO: module_prov_start()
+            ESP_LOGW(TAG, "重試耗盡，連線失敗");
+            fire_callbacks(WIFI_EVT_CONNECT_FAILED);
         }
     } else if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *evt = (ip_event_got_ip_t *)data;
@@ -105,6 +116,10 @@ void module_wifi_start(void)
     esp_wifi_get_config(WIFI_IF_STA, &cfg);
 
     if (cfg.sta.ssid[0] != '\0') {
+        if (s_connected) {
+            ESP_LOGI(TAG, "已連線至 %s，跳過重複連線", (char *)cfg.sta.ssid);
+            return;
+        }
         ESP_LOGI(TAG, "找到已儲存的 SSID：%s，嘗試連線", (char *)cfg.sta.ssid);
         s_started     = true;
         s_retry_count = 0;

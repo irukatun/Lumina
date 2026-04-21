@@ -5,11 +5,9 @@
 #include <esp_err.h>
 
 typedef enum {
-    WIFI_EVT_CONNECTED,     // 已取得 IP，可以使用網路
-    WIFI_EVT_DISCONNECTED,  // 連線中斷
-    WIFI_EVT_PROV_START,    // 開始配網（BLE provisioning）
-    WIFI_EVT_PROV_DONE,     // 配網完成
-    WIFI_EVT_PROV_FAILED,   // 配網失敗
+    WIFI_EVT_CONNECTED,      // 已取得 IP，可以使用網路
+    WIFI_EVT_DISCONNECTED,   // 連線中斷
+    WIFI_EVT_CONNECT_FAILED, // 重試耗盡後仍無法連線
 } module_wifi_event_t;
 
 typedef void (*module_wifi_event_cb_t)(module_wifi_event_t event);
@@ -41,5 +39,16 @@ bool module_wifi_is_connected(void);
  */
 void module_wifi_get_ip(char *buf, size_t len);
 
+/**
+ * @brief 新增 WiFi 事件 callback（最多 10 個）
+ *
+ * @param cb 事件發生時呼叫的函式
+ */
 void module_wifi_add_callback(module_wifi_event_cb_t cb);
+
+/**
+ * @brief 移除 WiFi 事件 callback
+ *
+ * @param cb 要移除的函式
+ */
 void module_wifi_remove_callback(module_wifi_event_cb_t cb);

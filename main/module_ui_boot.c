@@ -9,7 +9,7 @@
 
 // 本專案模組
 #include "board.h"
-#include "fonts.h"
+#include "fonts/fonts.h"
 #include "module_display.h"
 #include "module_ui_boot.h"
 
@@ -19,6 +19,7 @@ static const char *TAG = "M_UI_Boot";
 // ======================================================================
 // 私有變數
 // ======================================================================
+static lv_obj_t *s_scr          = NULL;
 static lv_obj_t *s_bar          = NULL;
 static lv_obj_t *s_status_label = NULL;
 static lv_obj_t *s_spinner      = NULL;
@@ -73,13 +74,15 @@ void module_ui_boot_show(void)
 
     lvgl_port_lock(0);
 
-    lv_obj_t *scr = lv_screen_active();
-
-    lv_obj_set_style_bg_color(scr, lv_color_black(), 0);
-    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+    // 建立專屬螢幕物件，避免污染預設 screen；後續畫面切換時由 LVGL 自動釋放
+    s_scr = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(s_scr, lv_color_black(), 0);
+    lv_obj_set_style_bg_opa(s_scr, LV_OPA_COVER, 0);
+    lv_obj_clear_flag(s_scr, LV_OBJ_FLAG_SCROLLABLE);
+    lv_screen_load(s_scr);
 
     // 主標題
-    lv_obj_t *lbl_title = lv_label_create(scr);
+    lv_obj_t *lbl_title = lv_label_create(s_scr);
     lv_label_set_text(lbl_title, "LUMINA");
     lv_obj_set_style_text_font(lbl_title, &font_huninn_32, 0);
     lv_obj_set_style_text_color(lbl_title, lv_color_white(), 0);
@@ -87,21 +90,21 @@ void module_ui_boot_show(void)
     lv_obj_align(lbl_title, LV_ALIGN_CENTER, 0, -75);
 
     // 副標題
-    lv_obj_t *lbl_subtitle = lv_label_create(scr);
+    lv_obj_t *lbl_subtitle = lv_label_create(s_scr);
     lv_label_set_text(lbl_subtitle, "小鹿米智慧桌上助理");
     lv_obj_set_style_text_font(lbl_subtitle, &font_huninn_18, 0);
     lv_obj_set_style_text_color(lbl_subtitle, lv_color_make(200, 200, 200), 0);
     lv_obj_align(lbl_subtitle, LV_ALIGN_CENTER, 0, -35);
 
     // 版本號
-    lv_obj_t *lbl_ver = lv_label_create(scr);
+    lv_obj_t *lbl_ver = lv_label_create(s_scr);
     lv_label_set_text(lbl_ver, "v" FIRMWARE_VERSION);
     lv_obj_set_style_text_font(lbl_ver, &font_huninn_14, 0);
     lv_obj_set_style_text_color(lbl_ver, lv_color_make(160, 160, 160), 0);
     lv_obj_align(lbl_ver, LV_ALIGN_CENTER, 0, -5);
 
     // 初始化狀態文字（進度條上方）
-    s_status_label = lv_label_create(scr);
+    s_status_label = lv_label_create(s_scr);
     lv_label_set_text(s_status_label, "正在初始化...");
     lv_obj_set_style_text_font(s_status_label, &font_huninn_14, 0);
     lv_obj_set_style_text_color(s_status_label, lv_color_white(), 0);
@@ -109,7 +112,7 @@ void module_ui_boot_show(void)
     lv_obj_set_style_opa(s_status_label, LV_OPA_TRANSP, 0);
 
     // 進度條
-    s_bar = lv_bar_create(scr);
+    s_bar = lv_bar_create(s_scr);
     lv_obj_set_size(s_bar, 320, 6);
     lv_obj_align(s_bar, LV_ALIGN_CENTER, 0, 95);
     lv_obj_set_style_bg_color(s_bar, lv_color_make(60, 60, 60), LV_PART_MAIN);
@@ -126,7 +129,7 @@ void module_ui_boot_show(void)
     lv_bar_set_value(s_bar, 0, LV_ANIM_OFF);
 
     // 右下角旋轉 Spinner
-    s_spinner = lv_spinner_create(scr);
+    s_spinner = lv_spinner_create(s_scr);
     lv_obj_set_size(s_spinner, 36, 36);
     lv_obj_align(s_spinner, LV_ALIGN_BOTTOM_RIGHT, -18, -18);
     lv_spinner_set_anim_params(s_spinner, 1000, 300);

@@ -31,7 +31,7 @@ esp_err_t module_imu_init(void);
 module_imu_status_t module_imu_get_status(void);
 
 /**
- * @brief 新增 IMU 事件 callback（最多 4 個）
+ * @brief 新增 IMU 事件 callback（最多 10 個）
  *
  * @param cb 事件發生時呼叫的函式
  */

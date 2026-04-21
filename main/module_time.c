@@ -4,8 +4,6 @@
 // ESP-IDF 系統組件
 #include <esp_err.h>
 #include <esp_log.h>
-
-// ESP-IDF 驅動
 #include <driver/i2c_master.h>
 
 // 本專案模組

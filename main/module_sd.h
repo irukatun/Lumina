@@ -1,9 +1,7 @@
 #pragma once
 
-// ESP-IDF 系統標頭
+// ESP-IDF 系統組件
 #include <esp_err.h>
-
-// ESP-IDF 驅動
 #include <sdmmc_cmd.h>
 
 /**

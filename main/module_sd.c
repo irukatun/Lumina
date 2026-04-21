@@ -12,6 +12,7 @@
 #include "board.h"
 #include "module_sd.h"
 
+// 日誌標籤
 static const char *TAG = "M_SD";
 
 // ======================================================================

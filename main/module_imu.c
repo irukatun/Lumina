@@ -1,5 +1,7 @@
 // C 標準函式庫
 #include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 // ESP-IDF 系統組件
 #include <esp_log.h>
@@ -24,6 +26,7 @@ static const char *TAG = "M_IMU";
 #define IMU_TASK_STACK_SIZE     4096
 #define IMU_TASK_PRIORITY       5
 #define IMU_POLL_INTERVAL_MS    20          // 50Hz 輪詢
+#define MAX_CALLBACKS           10
 
 #define IMU_BASE_X              0.0274f     // 實測靜止基線
 #define IMU_BASE_Y              0.008f      // 實測靜止基線
@@ -41,9 +44,9 @@ static const char *TAG = "M_IMU";
 // ======================================================================
 // 私有變數
 // ======================================================================
-static mpu6050_handle_t     s_mpu6050_handle    = NULL;
-static imu_event_cb_t       s_event_cbs[4]      = {NULL};
-static TaskHandle_t         s_imu_task_handle   = NULL;
+static mpu6050_handle_t     s_mpu6050_handle              = NULL;
+static imu_event_cb_t       s_event_cbs[MAX_CALLBACKS]    = {NULL};
+static TaskHandle_t         s_imu_task_handle             = NULL;
 static module_imu_status_t  s_status            = MODULE_IMU_STATUS_ERROR;
 static bool                 s_is_shaking        = false;
 
@@ -176,13 +179,14 @@ static void imu_task(void *arg)
     while (true) {
         esp_err_t ret = mpu6050_get_motion(s_mpu6050_handle, &gyro, &accel, &temperature);
         if (ret == ESP_OK) {
-            imu_event_t event = -1;
+            bool        has_event = false;
+            imu_event_t event     = IMU_EVENT_TAP;
             int shake = detect_shake(&accel);
             int tap   = detect_tap(&accel);
-            if (tap   != -1) event = (imu_event_t)tap;
-            if (shake != -1) event = (imu_event_t)shake;
-            if (event != -1) {
-                for (int i = 0; i < 4; i++) {
+            if (tap   != -1) { event = (imu_event_t)tap;   has_event = true; }
+            if (shake != -1) { event = (imu_event_t)shake; has_event = true; }
+            if (has_event) {
+                for (int i = 0; i < MAX_CALLBACKS; i++) {
                     if (s_event_cbs[i] != NULL) s_event_cbs[i](event);
                 }
             }
@@ -217,7 +221,7 @@ module_imu_status_t module_imu_get_status(void)
 // 新增 IMU 事件 callback
 void module_imu_add_callback(imu_event_cb_t cb)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < MAX_CALLBACKS; i++) {
         if (s_event_cbs[i] == NULL) {
             s_event_cbs[i] = cb;
             return;
@@ -229,7 +233,7 @@ void module_imu_add_callback(imu_event_cb_t cb)
 // 移除 IMU 事件 callback
 void module_imu_remove_callback(imu_event_cb_t cb)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < MAX_CALLBACKS; i++) {
         if (s_event_cbs[i] == cb) {
             s_event_cbs[i] = NULL;
             return;

@@ -18,6 +18,9 @@
 #include "module_imu.h"
 #include "module_pir.h"
 #include "module_wifi.h"
+#include "module_prov.h"
+#include "module_network.h"
+#include "module_ui_network.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -95,9 +98,11 @@ esp_err_t module_boot_run(void)
     vTaskDelay(pdMS_TO_TICKS(200));
     LOG_HEAP();
 
-    // WiFi 初始化（非關鍵，失敗不中斷啟動）
+    // 網路模組初始化（非關鍵，失敗不中斷啟動）
     module_ui_boot_set_status("正在初始化網路模組...");
     module_wifi_init();
+    module_prov_init();
+    module_network_init();
     module_ui_boot_set_progress(70);
     vTaskDelay(pdMS_TO_TICKS(300));
     LOG_HEAP();
@@ -118,6 +123,11 @@ esp_err_t module_boot_run(void)
     vTaskDelay(pdMS_TO_TICKS(500));
     module_ui_boot_set_complete();
     vTaskDelay(pdMS_TO_TICKS(1200));
+
+    // 網路設定畫面（每次開機皆顯示，讓用戶選擇憑證或配對）
+    // WiFi 連線由 UI 內的按鈕 handler 觸發，此處不再主動呼叫 module_wifi_start
+    module_ui_network_show();
+
     ESP_LOGI(TAG, "=====系統啟動完成=====");
     return ESP_OK;
 }

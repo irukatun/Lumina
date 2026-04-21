@@ -120,7 +120,6 @@ esp_err_t module_touch_init(void)
     ret = xpt2046_init();
     if (ret != ESP_OK) return ret;
 
-
     ESP_LOGI(TAG, "觸控初始化完成");
     return ESP_OK;
 }

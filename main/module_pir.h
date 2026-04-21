@@ -26,7 +26,7 @@ esp_err_t module_pir_init(void);
 bool module_pir_is_detected(void);
 
 /**
- * @brief 新增 PIR 事件 callback（最多 4 個）
+ * @brief 新增 PIR 事件 callback（最多 10 個）
  *
  * @param cb 事件發生時呼叫的函式
  */
