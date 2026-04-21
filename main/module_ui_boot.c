@@ -97,14 +97,14 @@ void module_ui_boot_show(void)
     lv_obj_t *lbl_ver = lv_label_create(scr);
     lv_label_set_text(lbl_ver, "v" FIRMWARE_VERSION);
     lv_obj_set_style_text_font(lbl_ver, &font_huninn_14, 0);
-    lv_obj_set_style_text_color(lbl_ver, lv_color_make(120, 120, 120), 0);
+    lv_obj_set_style_text_color(lbl_ver, lv_color_make(160, 160, 160), 0);
     lv_obj_align(lbl_ver, LV_ALIGN_CENTER, 0, -5);
 
     // 初始化狀態文字（進度條上方）
     s_status_label = lv_label_create(scr);
     lv_label_set_text(s_status_label, "正在初始化...");
     lv_obj_set_style_text_font(s_status_label, &font_huninn_14, 0);
-    lv_obj_set_style_text_color(s_status_label, lv_color_make(160, 160, 160), 0);
+    lv_obj_set_style_text_color(s_status_label, lv_color_white(), 0);
     lv_obj_align(s_status_label, LV_ALIGN_CENTER, 0, 72);
     lv_obj_set_style_opa(s_status_label, LV_OPA_TRANSP, 0);
 
