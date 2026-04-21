@@ -32,10 +32,10 @@ static const char *TAG = "M_IMU";
 #define TAP_ACCEL_THRESHOLD     0.7f        // g，超過視為敲擊尖峰（桌面雜訊實測最高 0.6g）
 #define TAP_MAX_CYCLES          3           // 尖峰超過此週期數視為非敲擊
 
-#define SHAKE_ENTRY_THRESHOLD       0.15f   // g，超過此值進入偵測狀態
-#define SHAKE_LOW_THRESHOLD         0.07f   // g，低於此值視為靜止樣本
+#define SHAKE_LOUD_THRESHOLD        0.16f   // g，超過此值計為活躍樣本
+#define SHAKE_LOW_THRESHOLD         0.15f   // g，低於此值視為靜止樣本
 #define SHAKE_DETECT_WINDOW         25      // 偵測視窗樣本數
-#define SHAKE_MAX_QUIET_IN_WINDOW   10      // 視窗內靜止樣本上限（少於此值確認搖晃）
+#define SHAKE_MIN_LOUD_IN_WINDOW    10      // 視窗內活躍樣本下限（超過此值確認搖晃）
 #define SHAKE_EXIT_CONSECUTIVE      25      // 連續靜止樣本數才退出搖晃
 
 // ======================================================================
@@ -45,6 +45,7 @@ static mpu6050_handle_t     s_mpu6050_handle    = NULL;
 static imu_event_cb_t       s_event_cbs[4]      = {NULL};
 static TaskHandle_t         s_imu_task_handle   = NULL;
 static module_imu_status_t  s_status            = MODULE_IMU_STATUS_ERROR;
+static bool                 s_is_shaking        = false;
 
 // ======================================================================
 // 私有函式前向宣告
@@ -84,6 +85,13 @@ static int detect_tap(const mpu6050_accel_data_axes_t *accel)
     static uint32_t s_spike_cycles = 0;
     static bool     s_in_spike     = false;
 
+    // 晃動中暫停敲擊偵測，避免換邊瞬間的 z 軸峰值誤判
+    if (s_is_shaking) {
+        s_in_spike     = false;
+        s_spike_cycles = 0;
+        return -1;
+    }
+
     float dx = accel->x_axis - IMU_BASE_X;
     float dy = accel->y_axis - IMU_BASE_Y;
     float dz = accel->z_axis - IMU_BASE_Z;
@@ -112,27 +120,28 @@ static int detect_shake(const mpu6050_accel_data_axes_t *accel)
     typedef enum { SHAKE_IDLE, SHAKE_DETECTING, SHAKE_SHAKING } shake_state_t;
     static shake_state_t s_state        = SHAKE_IDLE;
     static uint32_t      s_window_count = 0;
-    static uint32_t      s_quiet_count  = 0;
+    static uint32_t      s_loud_count   = 0;
     static uint32_t      s_consec_quiet = 0;
 
     float x = fmaxf(fabsf(accel->x_axis) - IMU_BASE_X, 0.0f);
 
     switch (s_state) {
         case SHAKE_IDLE:
-            if (x > SHAKE_ENTRY_THRESHOLD) {
+            if (x > SHAKE_LOUD_THRESHOLD) {
                 s_state        = SHAKE_DETECTING;
-                s_window_count = 0;
-                s_quiet_count  = 0;
+                s_window_count = 1;
+                s_loud_count   = 1;
             }
             break;
 
         case SHAKE_DETECTING:
             s_window_count++;
-            if (x < SHAKE_LOW_THRESHOLD) s_quiet_count++;
+            if (x > SHAKE_LOUD_THRESHOLD) s_loud_count++;
             if (s_window_count >= SHAKE_DETECT_WINDOW) {
-                if (s_quiet_count < SHAKE_MAX_QUIET_IN_WINDOW) {
+                if (s_loud_count > SHAKE_MIN_LOUD_IN_WINDOW) {
                     s_state        = SHAKE_SHAKING;
                     s_consec_quiet = 0;
+                    s_is_shaking   = true;
                     return IMU_EVENT_SHAKE_START;
                 } else {
                     s_state = SHAKE_IDLE;
@@ -144,7 +153,8 @@ static int detect_shake(const mpu6050_accel_data_axes_t *accel)
             if (x < SHAKE_LOW_THRESHOLD) {
                 s_consec_quiet++;
                 if (s_consec_quiet >= SHAKE_EXIT_CONSECUTIVE) {
-                    s_state = SHAKE_IDLE;
+                    s_state      = SHAKE_IDLE;
+                    s_is_shaking = false;
                     return IMU_EVENT_SHAKE_END;
                 }
             } else {
@@ -167,8 +177,8 @@ static void imu_task(void *arg)
         esp_err_t ret = mpu6050_get_motion(s_mpu6050_handle, &gyro, &accel, &temperature);
         if (ret == ESP_OK) {
             imu_event_t event = -1;
-            int tap   = detect_tap(&accel);
             int shake = detect_shake(&accel);
+            int tap   = detect_tap(&accel);
             if (tap   != -1) event = (imu_event_t)tap;
             if (shake != -1) event = (imu_event_t)shake;
             if (event != -1) {
