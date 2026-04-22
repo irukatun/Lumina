@@ -157,6 +157,7 @@ static lv_obj_t *create_btn(lv_obj_t *parent, const char *text, bool primary,
     lv_obj_set_style_text_color(lbl,
         primary ? lv_color_black() : lv_color_white(), 0);
     lv_obj_align(lbl, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_add_flag(lbl, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     return btn;
 }
@@ -206,6 +207,7 @@ static lv_obj_t *create_small_btn(lv_obj_t *parent, const char *text,
     lv_obj_set_style_text_font(lbl, &font_huninn_18, 0);
     lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
     lv_obj_align(lbl, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_add_flag(lbl, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     return btn;
 }
@@ -323,6 +325,7 @@ static void build_panel_select(void)
     lv_obj_set_style_text_font(lbl_skip, &font_huninn_14, 0);
     lv_obj_set_style_text_color(lbl_skip, lv_color_make(120, 120, 120), 0);
     lv_obj_align(lbl_skip, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_add_flag(lbl_skip, LV_OBJ_FLAG_EVENT_BUBBLE);
 }
 
 static void build_panel_connect(void)

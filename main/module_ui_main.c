@@ -350,18 +350,20 @@ void module_ui_main_show(void)
     lv_obj_set_style_border_width(time_row, 0, 0);
     lv_obj_set_style_pad_all(time_row, 0, 0);
     lv_obj_set_style_pad_column(time_row, 2, 0);
-    lv_obj_clear_flag(time_row, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_clear_flag(time_row, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
     lv_obj_align(time_row, LV_ALIGN_CENTER, 0, -14);
 
     s_lbl_time = lv_label_create(time_row);
     lv_label_set_text(s_lbl_time, "--:--");
     lv_obj_set_style_text_font(s_lbl_time, &font_huninn_48, 0);
     lv_obj_set_style_text_color(s_lbl_time, lv_color_white(), 0);
+    lv_obj_add_flag(s_lbl_time, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     s_lbl_sec = lv_label_create(time_row);
     lv_label_set_text(s_lbl_sec, ":--");
     lv_obj_set_style_text_font(s_lbl_sec, &font_huninn_48, 0);
     lv_obj_set_style_text_color(s_lbl_sec, lv_color_make(190, 190, 190), 0);
+    lv_obj_add_flag(s_lbl_sec, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     // 下一個鬧鐘提示
     s_lbl_alarm = lv_label_create(clock_area);
@@ -369,6 +371,7 @@ void module_ui_main_show(void)
     lv_obj_set_style_text_font(s_lbl_alarm, &font_huninn_14, 0);
     lv_obj_set_style_text_color(s_lbl_alarm, lv_color_make(170, 170, 170), 0);
     lv_obj_align(s_lbl_alarm, LV_ALIGN_CENTER, 0, 40);
+    lv_obj_add_flag(s_lbl_alarm, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     // 上下分隔線（水平，1px）
     lv_obj_t *divider_h = lv_obj_create(left_panel);

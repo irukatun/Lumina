@@ -128,12 +128,14 @@ static void build_alarm_item(lv_obj_t *parent, int idx, const mock_alarm_t *a)
     lv_obj_set_style_text_color(lbl_time,
         a->enabled ? lv_color_white() : lv_color_make(140, 140, 140), 0);
     lv_obj_align(lbl_time, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_add_flag(lbl_time, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     lv_obj_t *lbl_label = lv_label_create(item);
     lv_label_set_text(lbl_label, a->label);
     lv_obj_set_style_text_font(lbl_label, &font_huninn_14, 0);
     lv_obj_set_style_text_color(lbl_label, lv_color_make(170, 170, 170), 0);
     lv_obj_align(lbl_label, LV_ALIGN_LEFT_MID, 80, 0);
+    lv_obj_add_flag(lbl_label, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     lv_obj_t *sw = lv_switch_create(item);
     lv_obj_set_size(sw, 40, 22);
