@@ -47,7 +47,6 @@ static lv_obj_t          *s_panel_connect  = NULL;
 static lv_obj_t          *s_panel_prov     = NULL;
 static SemaphoreHandle_t  s_done_sem       = NULL;
 static ui_net_state_t     s_state          = UI_NET_SELECT;
-static bool               s_prov_cred_fail = false;
 
 // 連線面板
 static lv_obj_t   *s_lbl_conn_title = NULL;
@@ -57,8 +56,8 @@ static lv_obj_t   *s_btns_fail      = NULL;
 static lv_timer_t *s_server_timer   = NULL;
 
 // 配網面板
-static lv_obj_t   *s_lbl_prov_status = NULL;
-static lv_obj_t   *s_lbl_prov_cancel = NULL;
+static lv_obj_t   *s_lbl_prov_status  = NULL;
+static lv_obj_t   *s_btn_prov_restart = NULL;
 
 // ======================================================================
 // 私有函式前向宣告
@@ -230,9 +229,10 @@ static void on_btn_use_saved(lv_event_t *e)
 static void on_btn_other_network(lv_event_t *e)
 {
     (void)e;
-    s_prov_cred_fail = false;
     s_state = UI_NET_PROV;
     lv_label_set_text(s_lbl_prov_status, "等待手機連線中...");
+    lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(200, 200, 200), 0);
+    lv_obj_add_flag(s_btn_prov_restart, LV_OBJ_FLAG_HIDDEN);
     show_panel(s_panel_prov);
     module_network_provision_start();
 }
@@ -260,16 +260,10 @@ static void on_btn_reprov(lv_event_t *e)
     s_state = UI_NET_SELECT;
 }
 
-static void on_btn_prov_cancel(lv_event_t *e)
+static void on_btn_prov_restart(lv_event_t *e)
 {
     (void)e;
-    if (s_prov_cred_fail) {
-        esp_restart();
-        return;
-    }
-    module_network_provision_stop();
-    show_panel(s_panel_select);
-    s_state = UI_NET_SELECT;
+    esp_restart();
 }
 
 
@@ -428,9 +422,9 @@ static void build_panel_prov(void)
     lv_obj_set_style_text_align(s_lbl_prov_status, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(s_lbl_prov_status, LV_ALIGN_CENTER, 0, +50);
 
-    // 取消按鈕（CRED_FAILED 時文字會改成「重新啟動」）
-    lv_obj_t *btn_cancel = create_btn(s_panel_prov, "取消", false, +112, on_btn_prov_cancel);
-    s_lbl_prov_cancel = lv_obj_get_child(btn_cancel, 0);
+    // 重新啟動按鈕（只在 CRED_FAIL 時顯示）
+    s_btn_prov_restart = create_btn(s_panel_prov, "重新啟動", false, +112, on_btn_prov_restart);
+    lv_obj_add_flag(s_btn_prov_restart, LV_OBJ_FLAG_HIDDEN);
 }
 
 // ======================================================================
@@ -511,10 +505,9 @@ static void on_prov_event(module_network_prov_event_t event)
             break;
 
         case NET_PROV_EVT_CRED_FAIL:
-            s_prov_cred_fail = true;
             lv_label_set_text(s_lbl_prov_status, "密碼錯誤\n請在應用程式中重新輸入或按下方按鈕重新啟動");
             lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(224, 80, 80), 0);
-            lv_label_set_text(s_lbl_prov_cancel, "重新啟動");
+            lv_obj_clear_flag(s_btn_prov_restart, LV_OBJ_FLAG_HIDDEN);
             break;
 
         case NET_PROV_EVT_DONE:
