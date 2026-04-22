@@ -122,7 +122,8 @@ static void sync_task(void *arg)
             s_weather     = weather_tmp;
             s_has_weather = true;
         } else {
-            ESP_LOGW(TAG, "天氣取得失敗，保留上次資料");
+            ESP_LOGW(TAG, "天氣取得失敗，清除舊資料");
+            s_has_weather = false;
         }
 
         set_status(SYNC_STATUS_DONE);

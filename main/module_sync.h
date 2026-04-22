@@ -25,9 +25,12 @@ typedef enum {
  */
 typedef struct {
     float    outdoor_temp;      // 室外氣溫（°C）
+    float    feels_like;        // 體感溫度（°C）
     char     city[32];          // 城市顯示名（由 Geo API 回傳）
     char     weather_text[32];  // 天氣描述（如「晴」）
     int      humidity;          // 相對濕度（%）
+    float    precip;            // 當前小時降水量（mm）
+    float    wind_speed;        // 風速（km/h）
     time_t   updated_at;        // 最後成功更新的 Unix timestamp
 } module_sync_weather_t;
 
