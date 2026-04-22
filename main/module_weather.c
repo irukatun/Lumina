@@ -215,18 +215,25 @@ static esp_err_t weather_parse_now(const char *json, module_sync_weather_t *out)
         goto cleanup;
     }
 
-    cJSON *temp     = cJSON_GetObjectItem(now, "temp");
-    cJSON *text     = cJSON_GetObjectItem(now, "text");
-    cJSON *humidity = cJSON_GetObjectItem(now, "humidity");
+    cJSON *temp       = cJSON_GetObjectItem(now, "temp");
+    cJSON *feels_like = cJSON_GetObjectItem(now, "feelsLike");
+    cJSON *text       = cJSON_GetObjectItem(now, "text");
+    cJSON *humidity   = cJSON_GetObjectItem(now, "humidity");
+    cJSON *precip     = cJSON_GetObjectItem(now, "precip");
+    cJSON *wind_speed = cJSON_GetObjectItem(now, "windSpeed");
 
-    if (temp == NULL || text == NULL || humidity == NULL) {
+    if (temp == NULL || feels_like == NULL || text == NULL ||
+        humidity == NULL || precip == NULL || wind_speed == NULL) {
         ESP_LOGE(TAG, "Weather API 回應缺少必要欄位");
         goto cleanup;
     }
 
     out->outdoor_temp = (float)atof(temp->valuestring);
+    out->feels_like   = (float)atof(feels_like->valuestring);
     snprintf(out->weather_text, sizeof(out->weather_text), "%s", text->valuestring);
-    out->humidity = atoi(humidity->valuestring);
+    out->humidity   = atoi(humidity->valuestring);
+    out->precip     = (float)atof(precip->valuestring);
+    out->wind_speed = (float)atof(wind_speed->valuestring);
     result = ESP_OK;
 
 cleanup:
@@ -260,7 +267,8 @@ esp_err_t module_weather_fetch(module_sync_weather_t *out)
     snprintf(out->city, sizeof(out->city), "%s", CONFIG_WEATHER_DEFAULT_CITY);
     out->updated_at = time(NULL);
 
-    ESP_LOGI(TAG, "天氣取得成功: %s %.1f°C %s 濕度 %d%%",
-             out->city, out->outdoor_temp, out->weather_text, out->humidity);
+    ESP_LOGI(TAG, "天氣取得成功: %s %.1f°C(體感%.1f) %s 濕度%d%% 降水%.1fmm 風速%.1fkm/h",
+             out->city, out->outdoor_temp, out->feels_like,
+             out->weather_text, out->humidity, out->precip, out->wind_speed);
     return ESP_OK;
 }
