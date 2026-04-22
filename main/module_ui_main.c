@@ -14,6 +14,7 @@
 #include "module_time.h"
 #include "module_imu.h"
 #include "module_pir.h"
+#include "module_sync.h"
 #include "module_ui_alarm.h"
 #include "module_ui_main.h"
 
@@ -72,6 +73,9 @@ static lv_obj_t  *s_lbl_temp_val    = NULL;
 // LVGL timer
 static lv_timer_t *s_clock_timer    = NULL;
 
+// 同步狀態指示器
+static lv_obj_t   *s_spinner_sync   = NULL;
+
 // 敲擊自動消退計數（兩個任務都在 lvgl_port_lock 內存取，無競態）
 static int s_tap_clear_ticks = 0;
 
@@ -84,6 +88,7 @@ static void      refresh_clock(void);
 static void      clock_timer_cb(lv_timer_t *timer);
 static void      on_imu_event(imu_event_t event);
 static void      on_pir_event(pir_event_t event);
+static void      on_sync_event(module_sync_status_t status);
 static void      on_time_clicked(lv_event_t *e);
 
 // ======================================================================
@@ -187,6 +192,19 @@ static void on_imu_event(imu_event_t event)
     lvgl_port_unlock();
 }
 
+// 由 module_sync 任務呼叫（LVGL 外部，需加鎖）
+static void on_sync_event(module_sync_status_t status)
+{
+    if (s_spinner_sync == NULL) return;
+    lvgl_port_lock(0);
+    if (status == SYNC_STATUS_SYNCING) {
+        lv_obj_clear_flag(s_spinner_sync, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(s_spinner_sync, LV_OBJ_FLAG_HIDDEN);
+    }
+    lvgl_port_unlock();
+}
+
 // 點擊時間列 → 打開鬧鐘設定 overlay（LVGL 事件回呼，已在 lock 內）
 static void on_time_clicked(lv_event_t *e)
 {
@@ -266,6 +284,12 @@ void module_ui_main_show(void)
     lv_obj_set_style_text_font(lbl_bt, &font_mi_14, 0);
     lv_obj_set_style_text_color(lbl_bt, lv_color_make(170, 170, 170), 0);
     lv_obj_align_to(lbl_bt, lbl_wifi, LV_ALIGN_OUT_LEFT_MID, -4, 0);
+
+    // 同步轉圈指示器（Bluetooth 左側，預設隱藏）
+    s_spinner_sync = lv_spinner_create(status_bar);
+    lv_obj_set_size(s_spinner_sync, 14, 14);
+    lv_obj_align_to(s_spinner_sync, lbl_bt, LV_ALIGN_OUT_LEFT_MID, -6, 0);
+    lv_obj_add_flag(s_spinner_sync, LV_OBJ_FLAG_HIDDEN);
 
     // ------------------------------------------------------------------
     // 左右分隔線（垂直，1px）
@@ -443,6 +467,7 @@ void module_ui_main_show(void)
 
     module_imu_add_callback(on_imu_event);
     module_pir_add_callback(on_pir_event);
+    module_sync_add_callback(on_sync_event);
 
     ESP_LOGI(TAG, "主畫面就緒");
 }
@@ -451,6 +476,7 @@ void module_ui_main_destroy(void)
 {
     module_imu_remove_callback(on_imu_event);
     module_pir_remove_callback(on_pir_event);
+    module_sync_remove_callback(on_sync_event);
 
     lvgl_port_lock(0);
 
@@ -473,5 +499,6 @@ void module_ui_main_destroy(void)
     s_lbl_alarm       = NULL;
     s_lbl_imu_val     = NULL;
     s_lbl_temp_val    = NULL;
+    s_spinner_sync    = NULL;
     s_tap_clear_ticks = 0;
 }

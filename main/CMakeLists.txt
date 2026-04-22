@@ -13,6 +13,7 @@ idf_component_register(
         module_ui_main.c
         module_ui_alarm.c
         module_network.c
+        module_sync.c
         module_ui_network.c
         module_display.c
         module_touch.c
