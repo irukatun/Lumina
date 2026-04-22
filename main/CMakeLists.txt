@@ -12,8 +12,6 @@ idf_component_register(
         module_ui_boot.c
         module_ui_main.c
         module_ui_alarm.c
-        module_wifi.c
-        module_prov.c
         module_network.c
         module_ui_network.c
         module_display.c
@@ -42,5 +40,6 @@ idf_component_register(
         esp_netif
         esp_event
         wifi_provisioning
+        lwip
     LDFRAGMENTS "esp_lcd_iram.lf" # 連結器規則
 )

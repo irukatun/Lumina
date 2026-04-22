@@ -3,7 +3,6 @@
 #include <freertos/semphr.h>
 #include <esp_log.h>
 #include <esp_system.h>
-#include <esp_wifi.h>
 
 // 第三方組件
 #include <lvgl.h>
@@ -12,8 +11,6 @@
 // 本專案模組
 #include "board.h"
 #include "fonts/fonts.h"
-#include "module_wifi.h"
-#include "module_prov.h"
 #include "module_network.h"
 #include "module_ui_network.h"
 
@@ -77,9 +74,8 @@ static void      set_step(int idx, step_state_t state);
 static void      reset_steps(void);
 static void      show_fail_state(const char *msg);
 static void      finish(void);
-static void      on_wifi_event(module_wifi_event_t event);
-static void      on_network_event(module_network_status_t status);
-static void      on_prov_event(module_prov_event_t event);
+static void      on_net_event(module_network_event_t event);
+static void      on_prov_event(module_network_prov_event_t event);
 
 // ======================================================================
 // 私有函式實作 — 通用輔助
@@ -228,7 +224,7 @@ static void on_btn_use_saved(lv_event_t *e)
     set_step(STEP_WIFI, STEP_RUNNING);
     lv_label_set_text(s_lbl_conn_title, "正在連線...");
     lv_obj_set_style_text_color(s_lbl_conn_title, lv_color_white(), 0);
-    module_wifi_start();
+    module_network_connect();
 }
 
 static void on_btn_other_network(lv_event_t *e)
@@ -238,7 +234,7 @@ static void on_btn_other_network(lv_event_t *e)
     s_state = UI_NET_PROV;
     lv_label_set_text(s_lbl_prov_status, "等待手機連線中...");
     show_panel(s_panel_prov);
-    module_prov_start();
+    module_network_provision_start();
 }
 
 static void on_btn_skip(lv_event_t *e)
@@ -254,7 +250,7 @@ static void on_btn_retry(lv_event_t *e)
     set_step(STEP_WIFI, STEP_RUNNING);
     lv_label_set_text(s_lbl_conn_title, "正在連線...");
     lv_obj_set_style_text_color(s_lbl_conn_title, lv_color_white(), 0);
-    module_wifi_start();
+    module_network_connect();
 }
 
 static void on_btn_reprov(lv_event_t *e)
@@ -271,7 +267,7 @@ static void on_btn_prov_cancel(lv_event_t *e)
         esp_restart();
         return;
     }
-    module_prov_stop();
+    module_network_provision_stop();
     show_panel(s_panel_select);
     s_state = UI_NET_SELECT;
 }
@@ -306,9 +302,7 @@ static void build_panel_select(void)
     lv_obj_align(lbl_sub, LV_ALIGN_CENTER, 0, -75);
 
     // 按鈕 1：使用上次的連線（無憑證時灰掉不可點）
-    wifi_config_t wifi_cfg = {};
-    esp_wifi_get_config(WIFI_IF_STA, &wifi_cfg);
-    bool has_creds = (wifi_cfg.sta.ssid[0] != '\0');
+    bool has_creds = module_network_is_provisioned();
     lv_obj_t *btn1 = create_btn(s_panel_select,
                                 has_creds ? "使用上次的連線" : "無已儲存的網路",
                                 true, -18,
@@ -323,10 +317,10 @@ static void build_panel_select(void)
 
     // 跳過（純文字按鈕）
     lv_obj_t *btn_skip = lv_obj_create(s_panel_select);
-    lv_obj_set_size(btn_skip, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_size(btn_skip, 120, 30);
     lv_obj_set_style_bg_opa(btn_skip, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(btn_skip, 0, 0);
-    lv_obj_set_style_pad_all(btn_skip, 4, 0);
+    lv_obj_set_style_pad_all(btn_skip, 0, 0);
     lv_obj_align(btn_skip, LV_ALIGN_CENTER, 0, +122);
     lv_obj_add_event_cb(btn_skip, on_btn_skip, LV_EVENT_CLICKED, NULL);
 
@@ -419,12 +413,20 @@ static void build_panel_prov(void)
     lv_obj_set_style_text_color(lbl_inst, lv_color_make(150, 150, 150), 0);
     lv_obj_align(lbl_inst, LV_ALIGN_CENTER, 0, -14);
 
+    // 配對碼
+    lv_obj_t *lbl_pin = lv_label_create(s_panel_prov);
+    lv_label_set_text(lbl_pin, "配對碼：lumina");
+    lv_obj_set_style_text_font(lbl_pin, &font_huninn_14, 0);
+    lv_obj_set_style_text_color(lbl_pin, lv_color_make(150, 150, 150), 0);
+    lv_obj_align(lbl_pin, LV_ALIGN_CENTER, 0, +12);
+
     // 狀態文字
     s_lbl_prov_status = lv_label_create(s_panel_prov);
     lv_label_set_text(s_lbl_prov_status, "等待手機連線中...");
     lv_obj_set_style_text_font(s_lbl_prov_status, &font_huninn_18, 0);
     lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(200, 200, 200), 0);
-    lv_obj_align(s_lbl_prov_status, LV_ALIGN_CENTER, 0, +30);
+    lv_obj_set_style_text_align(s_lbl_prov_status, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(s_lbl_prov_status, LV_ALIGN_CENTER, 0, +50);
 
     // 取消按鈕（CRED_FAILED 時文字會改成「重新啟動」）
     lv_obj_t *btn_cancel = create_btn(s_panel_prov, "取消", false, +112, on_btn_prov_cancel);
@@ -446,77 +448,77 @@ static void server_check_done_cb(lv_timer_t *t)
     finish();
 }
 
-static void on_wifi_event(module_wifi_event_t event)
-{
-    lvgl_port_lock(0);
-
-    if (event == WIFI_EVT_CONNECTED) {
-        if (s_state == UI_NET_CONNECTING || s_state == UI_NET_PROV) {
-            s_state = UI_NET_CONNECTING;
-            show_panel(s_panel_connect);
-            reset_steps();
-            set_step(STEP_WIFI, STEP_OK);
-            set_step(STEP_INTERNET, STEP_RUNNING);
-            lv_label_set_text(s_lbl_conn_title, "正在確認網路...");
-            lv_obj_set_style_text_color(s_lbl_conn_title, lv_color_white(), 0);
-        }
-    } else if (event == WIFI_EVT_CONNECT_FAILED) {
-        if (s_state == UI_NET_CONNECTING) {
-            set_step(STEP_WIFI, STEP_FAIL);
-            show_fail_state("無法連接到 WiFi，請確認密碼是否正確");
-        }
-    }
-
-    lvgl_port_unlock();
-}
-
-static void on_network_event(module_network_status_t status)
-{
-    lvgl_port_lock(0);
-
-    if (s_state != UI_NET_CONNECTING) {
-        lvgl_port_unlock();
-        return;
-    }
-
-    if (status == NET_STATUS_AVAILABLE) {
-        set_step(STEP_INTERNET, STEP_OK);
-        set_step(STEP_SERVER, STEP_RUNNING);
-        lv_label_set_text(s_lbl_conn_title, "正在連接服務...");
-        // 伺服器假等待（1.5 秒後標記完成）
-        s_server_timer = lv_timer_create(server_check_done_cb, 1500, NULL);
-        lv_timer_set_repeat_count(s_server_timer, 1);
-    } else {
-        set_step(STEP_INTERNET, STEP_FAIL);
-        show_fail_state("WiFi 已連線，但無法存取網際網路");
-    }
-
-    lvgl_port_unlock();
-}
-
-static void on_prov_event(module_prov_event_t event)
+static void on_net_event(module_network_event_t event)
 {
     lvgl_port_lock(0);
 
     switch (event) {
-        case PROV_EVT_STARTED:
+        case NET_EVT_CONNECTED:
+            if (s_state == UI_NET_CONNECTING || s_state == UI_NET_PROV) {
+                s_state = UI_NET_CONNECTING;
+                show_panel(s_panel_connect);
+                reset_steps();
+                set_step(STEP_WIFI, STEP_OK);
+                set_step(STEP_INTERNET, STEP_RUNNING);
+                lv_label_set_text(s_lbl_conn_title, "正在確認網路...");
+                lv_obj_set_style_text_color(s_lbl_conn_title, lv_color_white(), 0);
+            }
+            break;
+
+        case NET_EVT_CONNECT_FAILED:
+            if (s_state == UI_NET_CONNECTING) {
+                set_step(STEP_WIFI, STEP_FAIL);
+                show_fail_state("無法連接到 WiFi，請確認密碼是否正確");
+            }
+            break;
+
+        case NET_EVT_INTERNET_UP:
+            if (s_state != UI_NET_CONNECTING) break;
+            set_step(STEP_INTERNET, STEP_OK);
+            set_step(STEP_SERVER, STEP_RUNNING);
+            lv_label_set_text(s_lbl_conn_title, "正在連接服務...");
+            // 伺服器假等待（1.5 秒後標記完成）
+            s_server_timer = lv_timer_create(server_check_done_cb, 1500, NULL);
+            lv_timer_set_repeat_count(s_server_timer, 1);
+            break;
+
+        case NET_EVT_INTERNET_DOWN:
+            if (s_state != UI_NET_CONNECTING) break;
+            set_step(STEP_INTERNET, STEP_FAIL);
+            show_fail_state("WiFi 已連線，但無法存取網際網路");
+            break;
+
+        default:
+            break;
+    }
+
+    lvgl_port_unlock();
+}
+
+static void on_prov_event(module_network_prov_event_t event)
+{
+    lvgl_port_lock(0);
+
+    switch (event) {
+        case NET_PROV_EVT_STARTED:
             lv_label_set_text(s_lbl_prov_status, "等待手機連線中...");
             lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(200, 200, 200), 0);
             break;
 
-        case PROV_EVT_CRED_RECEIVED:
+        case NET_PROV_EVT_CRED_RECV:
             lv_label_set_text(s_lbl_prov_status, "正在驗證憑證...");
+            lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(200, 200, 200), 0);
             break;
 
-        case PROV_EVT_CRED_FAILED:
+        case NET_PROV_EVT_CRED_FAIL:
             s_prov_cred_fail = true;
-            lv_label_set_text(s_lbl_prov_status, "密碼錯誤，可在應用程式中重試或按下方按鈕重新啟動");
+            lv_label_set_text(s_lbl_prov_status, "密碼錯誤\n請在應用程式中重新輸入或按下方按鈕重新啟動");
             lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(224, 80, 80), 0);
             lv_label_set_text(s_lbl_prov_cancel, "重新啟動");
             break;
 
-        case PROV_EVT_COMPLETED:
-            // WIFI_EVT_CONNECTED 會先到，on_wifi_event 已切換到 connect 面板
+        case NET_PROV_EVT_DONE:
+            // NET_EVT_CONNECTED 會先到，on_net_event 已切換到 connect 面板
             break;
     }
 
@@ -550,16 +552,14 @@ void module_ui_network_show(void)
 
     lvgl_port_unlock();
 
-    module_wifi_add_callback(on_wifi_event);
-    module_network_add_callback(on_network_event);
-    module_prov_add_callback(on_prov_event);
+    module_network_add_event_callback(on_net_event);
+    module_network_add_prov_callback(on_prov_event);
 
     // 阻塞直到用戶完成選擇或跳過
     xSemaphoreTake(s_done_sem, portMAX_DELAY);
 
-    module_wifi_remove_callback(on_wifi_event);
-    module_network_remove_callback(on_network_event);
-    module_prov_remove_callback(on_prov_event);
+    module_network_remove_event_callback(on_net_event);
+    module_network_remove_prov_callback(on_prov_event);
 
     if (s_server_timer) {
         lvgl_port_lock(0);
@@ -571,5 +571,6 @@ void module_ui_network_show(void)
     vSemaphoreDelete(s_done_sem);
     s_done_sem = NULL;
 
+    module_network_release_prov();
     ESP_LOGI(TAG, "網路設定完成");
 }

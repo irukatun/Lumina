@@ -8,7 +8,6 @@
  * @brief 顯示網路設定畫面並阻塞直到用戶完成選擇
  *
  * 提供三種選擇：使用已儲存的憑證、重新配網、跳過。
- * 內部會訂閱 module_wifi / module_network / module_prov 事件更新畫面。
- * 結束後自動解除訂閱並釋放畫面資源。
+ * 內部訂閱 module_network 事件更新畫面，結束後自動解除訂閱並釋放 prov 資源。
  */
 void module_ui_network_show(void);
