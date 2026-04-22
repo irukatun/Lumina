@@ -14,6 +14,7 @@ idf_component_register(
         module_ui_alarm.c
         module_network.c
         module_sync.c
+        module_weather.c
         module_ui_network.c
         module_display.c
         module_touch.c
@@ -42,5 +43,9 @@ idf_component_register(
         esp_event
         wifi_provisioning
         lwip
+        esp_http_client
+        mbedtls
+        json
+        espressif__zlib
     LDFRAGMENTS "esp_lcd_iram.lf" # 連結器規則
 )

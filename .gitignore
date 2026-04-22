@@ -5,6 +5,9 @@
 # 字體來源檔（由 generate_font.js 自動下載）
 main/fonts/*.ttf
 
+# API 金鑰與機密配置
+main/secrets.h
+
 # IDE 設定
 .vscode/
 

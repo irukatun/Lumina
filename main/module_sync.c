@@ -13,6 +13,8 @@
 #include "module_sync.h"
 #include "module_network.h"
 #include "module_time.h"
+#include "board.h"
+#include "module_weather.h"
 
 // 日誌標籤
 static const char *TAG = "M_Sync";
@@ -22,7 +24,7 @@ static const char *TAG = "M_Sync";
 // ======================================================================
 
 #define MAX_CALLBACKS    10
-#define SYNC_TASK_STACK  4096
+#define SYNC_TASK_STACK  8192  // esp_http_client + mbedTLS 握手需要較大 stack
 #define NTP_SERVER       "pool.ntp.org"
 #define NTP_TIMEOUT_MS   30000
 #define TIMEZONE         "CST-8"  // UTC+8，台灣標準時間
@@ -115,9 +117,13 @@ static void sync_task(void *arg)
                      rtc.hour, rtc.minute, rtc.second);
         }
 
-        // TODO: 天氣 API 請求
-        // s_weather.outdoor_temp = ...;
-        // s_has_weather = true;
+        module_sync_weather_t weather_tmp = {0};
+        if (module_weather_fetch(&weather_tmp) == ESP_OK) {
+            s_weather     = weather_tmp;
+            s_has_weather = true;
+        } else {
+            ESP_LOGW(TAG, "天氣取得失敗，保留上次資料");
+        }
 
         set_status(SYNC_STATUS_DONE);
         vTaskDelay(pdMS_TO_TICKS(SYNC_INTERVAL_MS));

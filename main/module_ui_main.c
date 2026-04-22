@@ -68,7 +68,9 @@ static lv_obj_t  *s_lbl_alarm       = NULL;  // 下一個鬧鐘提示（保留�
 static lv_obj_t  *s_lbl_imu_val     = NULL;
 
 // 右側資訊卡片
-static lv_obj_t  *s_lbl_temp_val    = NULL;
+static lv_obj_t  *s_lbl_temp_val     = NULL;
+static lv_obj_t  *s_lbl_temp_out     = NULL;
+static lv_obj_t  *s_lbl_temp_out_loc = NULL;
 
 // LVGL timer
 static lv_timer_t *s_clock_timer    = NULL;
@@ -197,11 +199,23 @@ static void on_sync_event(module_sync_status_t status)
 {
     if (s_spinner_sync == NULL) return;
     lvgl_port_lock(0);
+
     if (status == SYNC_STATUS_SYNCING) {
         lv_obj_clear_flag(s_spinner_sync, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(s_spinner_sync, LV_OBJ_FLAG_HIDDEN);
     }
+
+    if (status == SYNC_STATUS_DONE && s_lbl_temp_out != NULL) {
+        module_sync_weather_t w;
+        if (module_sync_get_weather(&w)) {
+            char buf[48];
+            snprintf(buf, sizeof(buf), "%.1f°C  %s", w.outdoor_temp, w.weather_text);
+            lv_label_set_text(s_lbl_temp_out, buf);
+            lv_label_set_text(s_lbl_temp_out_loc, w.city);
+        }
+    }
+
     lvgl_port_unlock();
 }
 
@@ -426,17 +440,17 @@ void module_ui_main_show(void)
     // 室外氣溫卡片（待 WiFi 接上後更新）
     lv_obj_t *card_temp_out = create_right_card(right_panel, "室外氣溫", 12 + CARD_H + CARD_GAP);
 
-    lv_obj_t *lbl_temp_out_loc = lv_label_create(card_temp_out);
-    lv_label_set_text(lbl_temp_out_loc, "桃園市平鎮區");
-    lv_obj_set_style_text_font(lbl_temp_out_loc, &font_huninn_14, 0);
-    lv_obj_set_style_text_color(lbl_temp_out_loc, lv_color_make(170, 170, 170), 0);
-    lv_obj_align(lbl_temp_out_loc, LV_ALIGN_TOP_RIGHT, 0, 0);
+    s_lbl_temp_out_loc = lv_label_create(card_temp_out);
+    lv_label_set_text(s_lbl_temp_out_loc, CONFIG_WEATHER_DEFAULT_CITY);
+    lv_obj_set_style_text_font(s_lbl_temp_out_loc, &font_huninn_14, 0);
+    lv_obj_set_style_text_color(s_lbl_temp_out_loc, lv_color_make(170, 170, 170), 0);
+    lv_obj_align(s_lbl_temp_out_loc, LV_ALIGN_TOP_RIGHT, 0, 0);
 
-    lv_obj_t *lbl_temp_out = lv_label_create(card_temp_out);
-    lv_label_set_text(lbl_temp_out, "請連接 WiFi");
-    lv_obj_set_style_text_font(lbl_temp_out, &font_huninn_18, 0);
-    lv_obj_set_style_text_color(lbl_temp_out, lv_color_white(), 0);
-    lv_obj_align(lbl_temp_out, LV_ALIGN_CENTER, 0, 8);
+    s_lbl_temp_out = lv_label_create(card_temp_out);
+    lv_label_set_text(s_lbl_temp_out, "請連接 WiFi");
+    lv_obj_set_style_text_font(s_lbl_temp_out, &font_huninn_18, 0);
+    lv_obj_set_style_text_color(s_lbl_temp_out, lv_color_white(), 0);
+    lv_obj_align(s_lbl_temp_out, LV_ALIGN_CENTER, 0, 8);
 
     // ------------------------------------------------------------------
     // 初始資料填入
@@ -497,8 +511,10 @@ void module_ui_main_destroy(void)
     s_lbl_time        = NULL;
     s_lbl_sec         = NULL;
     s_lbl_alarm       = NULL;
-    s_lbl_imu_val     = NULL;
-    s_lbl_temp_val    = NULL;
-    s_spinner_sync    = NULL;
+    s_lbl_imu_val      = NULL;
+    s_lbl_temp_val     = NULL;
+    s_lbl_temp_out     = NULL;
+    s_lbl_temp_out_loc = NULL;
+    s_spinner_sync     = NULL;
     s_tap_clear_ticks = 0;
 }

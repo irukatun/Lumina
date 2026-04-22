@@ -2,6 +2,7 @@
 
 #include <esp_err.h>
 #include <stdbool.h>
+#include <time.h>
 
 // ======================================================================
 // 公開型別
@@ -23,7 +24,11 @@ typedef enum {
  * @brief 天氣資料
  */
 typedef struct {
-    float outdoor_temp;  // 室外氣溫（°C）
+    float    outdoor_temp;      // 室外氣溫（°C）
+    char     city[32];          // 城市顯示名（由 Geo API 回傳）
+    char     weather_text[32];  // 天氣描述（如「晴」）
+    int      humidity;          // 相對濕度（%）
+    time_t   updated_at;        // 最後成功更新的 Unix timestamp
 } module_sync_weather_t;
 
 typedef void (*module_sync_cb_t)(module_sync_status_t status);

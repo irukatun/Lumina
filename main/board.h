@@ -55,3 +55,6 @@
 #define CONFIG_MPU6050_ADDR               0x69            // AD0 拉高 0x68->0x69
 // SD 卡掛載點
 #define CONFIG_SD_PATH                    "/sd"
+// 天氣查詢預設地點
+#define CONFIG_WEATHER_DEFAULT_CITY       "蘆竹區"      // 顯示用名稱（API 回傳的正式地名）
+#define CONFIG_WEATHER_LOCATION_ID        "28C50"       // QWeather Location ID
