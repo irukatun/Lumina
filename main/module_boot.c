@@ -1,4 +1,5 @@
 // ESP-IDF 系統組件
+#include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_log.h>
@@ -17,10 +18,7 @@
 #include "module_time.h"
 #include "module_imu.h"
 #include "module_pir.h"
-#include "module_wifi.h"
-#include "module_prov.h"
 #include "module_network.h"
-#include "module_ui_network.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -36,11 +34,25 @@ static const char *TAG = "M_Boot";
              heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM))
 
 // ======================================================================
+// 私有函式
+// ======================================================================
+// GPIO3 為 ESP32-S3 JTAG 啟動配置引腳，控制 GPIO39–42 的 JTAG 功能是否啟用
+// 避免 GPIO3 啟動時狀態無法確認導致 JTAG 狀態殘留，因此進行防禦性釋放
+static void gpio_reset(void)
+{
+    gpio_reset_pin(GPIO_NUM_39);
+    gpio_reset_pin(GPIO_NUM_40);
+    gpio_reset_pin(GPIO_NUM_41);
+    gpio_reset_pin(GPIO_NUM_42);
+}
+        
+// ======================================================================
 // 公開 API
 // ======================================================================
 // 執行完整啟動流程
 esp_err_t module_boot_run(void)
 {
+    gpio_reset();
     LOG_HEAP();
 
     // NVS 初始化
@@ -100,34 +112,17 @@ esp_err_t module_boot_run(void)
 
     // 網路模組初始化（非關鍵，失敗不中斷啟動）
     module_ui_boot_set_status("正在初始化網路模組...");
-    module_wifi_init();
-    module_prov_init();
     module_network_init();
     module_ui_boot_set_progress(70);
     vTaskDelay(pdMS_TO_TICKS(300));
     LOG_HEAP();
 
-    // TODO: 以下各模組加入後，set_progress 移至各 init 完成後
-    // INMP441:  module_inmp441_init();  module_ui_boot_set_progress(85);
-    // MAX98357: module_max98357_init(); module_ui_boot_set_progress(100);
+    // TODO: 兩個 i2s 裝置 init
 
     // 尚未實作前的假等待模擬
-    module_ui_boot_set_status("正在初始化音訊模組...");
-    module_ui_boot_set_progress(75);
-    vTaskDelay(pdMS_TO_TICKS(700));
-    module_ui_boot_set_status("正在載入主介面...");
-    module_ui_boot_set_progress(95);
-    vTaskDelay(pdMS_TO_TICKS(2000));
-    module_ui_boot_set_status("啟動完成");
+    module_ui_boot_set_status("系統初始化完成");
     module_ui_boot_set_progress(100);
-    vTaskDelay(pdMS_TO_TICKS(500));
     module_ui_boot_set_complete();
     vTaskDelay(pdMS_TO_TICKS(1200));
-
-    // 網路設定畫面（每次開機皆顯示，讓用戶選擇憑證或配對）
-    // WiFi 連線由 UI 內的按鈕 handler 觸發，此處不再主動呼叫 module_wifi_start
-    module_ui_network_show();
-
-    ESP_LOGI(TAG, "=====系統啟動完成=====");
     return ESP_OK;
 }
