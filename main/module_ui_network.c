@@ -35,7 +35,7 @@ static const char *TAG = "M_UI_Net";
 
 typedef enum { STEP_PENDING, STEP_RUNNING, STEP_OK, STEP_FAIL } step_state_t;
 
-typedef enum { UI_NET_SELECT, UI_NET_CONNECTING, UI_NET_PROV } ui_net_state_t;
+typedef enum { UI_NET_SELECT, UI_NET_CONFIRM, UI_NET_CONNECTING, UI_NET_PROV } ui_net_state_t;
 
 // ======================================================================
 // 私有變數
@@ -43,10 +43,15 @@ typedef enum { UI_NET_SELECT, UI_NET_CONNECTING, UI_NET_PROV } ui_net_state_t;
 
 static lv_obj_t          *s_scr            = NULL;
 static lv_obj_t          *s_panel_select   = NULL;
+static lv_obj_t          *s_panel_confirm  = NULL;
 static lv_obj_t          *s_panel_connect  = NULL;
 static lv_obj_t          *s_panel_prov     = NULL;
 static SemaphoreHandle_t  s_done_sem       = NULL;
 static ui_net_state_t     s_state          = UI_NET_SELECT;
+
+// 確認面板
+static lv_obj_t   *s_lbl_confirm_action = NULL;
+static bool        s_confirm_use_saved  = false;
 
 // 連線面板
 static lv_obj_t   *s_lbl_conn_title = NULL;
@@ -66,6 +71,7 @@ static lv_obj_t   *s_btn_prov_restart = NULL;
 static lv_obj_t *create_btn(lv_obj_t *parent, const char *text, bool primary,
                               lv_coord_t offset_y, lv_event_cb_t cb);
 static void      build_panel_select(void);
+static void      build_panel_confirm(void);
 static void      build_panel_connect(void);
 static void      build_panel_prov(void);
 static void      show_panel(lv_obj_t *panel);
@@ -73,6 +79,8 @@ static void      set_step(int idx, step_state_t state);
 static void      reset_steps(void);
 static void      show_fail_state(const char *msg);
 static void      finish(void);
+static void      on_btn_confirm_cancel(lv_event_t *e);
+static void      on_btn_confirm_ok(lv_event_t *e);
 static void      on_net_event(module_network_event_t event);
 static void      on_prov_event(module_network_prov_event_t event);
 
@@ -88,6 +96,7 @@ static void finish(void)
 static void show_panel(lv_obj_t *panel)
 {
     if (s_panel_select)  lv_obj_add_flag(s_panel_select,  LV_OBJ_FLAG_HIDDEN);
+    if (s_panel_confirm) lv_obj_add_flag(s_panel_confirm, LV_OBJ_FLAG_HIDDEN);
     if (s_panel_connect) lv_obj_add_flag(s_panel_connect, LV_OBJ_FLAG_HIDDEN);
     if (s_panel_prov)    lv_obj_add_flag(s_panel_prov,    LV_OBJ_FLAG_HIDDEN);
     if (panel)           lv_obj_clear_flag(panel,          LV_OBJ_FLAG_HIDDEN);
@@ -219,24 +228,19 @@ static lv_obj_t *create_small_btn(lv_obj_t *parent, const char *text,
 static void on_btn_use_saved(lv_event_t *e)
 {
     (void)e;
-    s_state = UI_NET_CONNECTING;
-    show_panel(s_panel_connect);
-    reset_steps();
-    set_step(STEP_WIFI, STEP_RUNNING);
-    lv_label_set_text(s_lbl_conn_title, "正在連線...");
-    lv_obj_set_style_text_color(s_lbl_conn_title, lv_color_white(), 0);
-    module_network_connect();
+    s_confirm_use_saved = true;
+    lv_label_set_text(s_lbl_confirm_action, "使用上次的連線");
+    s_state = UI_NET_CONFIRM;
+    show_panel(s_panel_confirm);
 }
 
 static void on_btn_other_network(lv_event_t *e)
 {
     (void)e;
-    s_state = UI_NET_PROV;
-    lv_label_set_text(s_lbl_prov_status, "等待手機連線中...");
-    lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(200, 200, 200), 0);
-    lv_obj_add_flag(s_btn_prov_restart, LV_OBJ_FLAG_HIDDEN);
-    show_panel(s_panel_prov);
-    module_network_provision_start();
+    s_confirm_use_saved = false;
+    lv_label_set_text(s_lbl_confirm_action, "連線到其他網路");
+    s_state = UI_NET_CONFIRM;
+    show_panel(s_panel_confirm);
 }
 
 static void on_btn_skip(lv_event_t *e)
@@ -255,11 +259,32 @@ static void on_btn_retry(lv_event_t *e)
     module_network_connect();
 }
 
-static void on_btn_reprov(lv_event_t *e)
+static void on_btn_confirm_cancel(lv_event_t *e)
 {
     (void)e;
-    show_panel(s_panel_select);
     s_state = UI_NET_SELECT;
+    show_panel(s_panel_select);
+}
+
+static void on_btn_confirm_ok(lv_event_t *e)
+{
+    (void)e;
+    if (s_confirm_use_saved) {
+        s_state = UI_NET_CONNECTING;
+        show_panel(s_panel_connect);
+        reset_steps();
+        set_step(STEP_WIFI, STEP_RUNNING);
+        lv_label_set_text(s_lbl_conn_title, "正在連線...");
+        lv_obj_set_style_text_color(s_lbl_conn_title, lv_color_white(), 0);
+        module_network_connect();
+    } else {
+        s_state = UI_NET_PROV;
+        lv_label_set_text(s_lbl_prov_status, "等待手機連線中...");
+        lv_obj_set_style_text_color(s_lbl_prov_status, lv_color_make(200, 200, 200), 0);
+        lv_obj_add_flag(s_btn_prov_restart, LV_OBJ_FLAG_HIDDEN);
+        show_panel(s_panel_prov);
+        module_network_provision_start();
+    }
 }
 
 static void on_btn_prov_restart(lv_event_t *e)
@@ -328,6 +353,53 @@ static void build_panel_select(void)
     lv_obj_add_flag(lbl_skip, LV_OBJ_FLAG_EVENT_BUBBLE);
 }
 
+static void build_panel_confirm(void)
+{
+    s_panel_confirm = lv_obj_create(s_scr);
+    lv_obj_set_size(s_panel_confirm, CONFIG_ILI9488_WIDTH, CONFIG_ILI9488_HEIGHT);
+    lv_obj_set_pos(s_panel_confirm, 0, 0);
+    lv_obj_set_style_bg_opa(s_panel_confirm, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(s_panel_confirm, 0, 0);
+    lv_obj_set_style_pad_all(s_panel_confirm, 0, 0);
+    lv_obj_clear_flag(s_panel_confirm, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(s_panel_confirm, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_t *lbl_title = lv_label_create(s_panel_confirm);
+    lv_label_set_text(lbl_title, "確認選擇");
+    lv_obj_set_style_text_font(lbl_title, &font_huninn_24, 0);
+    lv_obj_set_style_text_color(lbl_title, lv_color_white(), 0);
+    lv_obj_align(lbl_title, LV_ALIGN_CENTER, 0, -110);
+
+    s_lbl_confirm_action = lv_label_create(s_panel_confirm);
+    lv_label_set_text(s_lbl_confirm_action, "");
+    lv_obj_set_style_text_font(s_lbl_confirm_action, &font_huninn_18, 0);
+    lv_obj_set_style_text_color(s_lbl_confirm_action, lv_color_white(), 0);
+    lv_obj_set_style_text_align(s_lbl_confirm_action, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(s_lbl_confirm_action, LV_ALIGN_CENTER, 0, -58);
+
+    lv_obj_t *lbl_warn = lv_label_create(s_panel_confirm);
+    lv_label_set_text(lbl_warn, "選擇後若需更換連線方式\n必須重新啟動裝置");
+    lv_obj_set_style_text_font(lbl_warn, &font_huninn_14, 0);
+    lv_obj_set_style_text_color(lbl_warn, lv_color_make(180, 150, 80), 0);
+    lv_obj_set_style_text_align(lbl_warn, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(lbl_warn, LV_ALIGN_CENTER, 0, -10);
+
+    lv_obj_t *btns = lv_obj_create(s_panel_confirm);
+    lv_obj_set_size(btns, BTN_W, 60);
+    lv_obj_align(btns, LV_ALIGN_CENTER, 0, +80);
+    lv_obj_set_style_bg_opa(btns, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(btns, 0, 0);
+    lv_obj_set_style_pad_all(btns, 0, 0);
+    lv_obj_set_layout(btns, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(btns, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(btns, LV_FLEX_ALIGN_SPACE_EVENLY,
+                          LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(btns, LV_OBJ_FLAG_SCROLLABLE);
+
+    create_small_btn(btns, "取消", lv_color_make(50, 50, 50), on_btn_confirm_cancel);
+    create_small_btn(btns, "確認", lv_color_make(50, 130, 80), on_btn_confirm_ok);
+}
+
 static void build_panel_connect(void)
 {
     s_panel_connect = lv_obj_create(s_scr);
@@ -373,9 +445,9 @@ static void build_panel_connect(void)
     lv_obj_clear_flag(s_btns_fail, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(s_btns_fail, LV_OBJ_FLAG_HIDDEN);
 
-    create_small_btn(s_btns_fail, "重試",     lv_color_make(50, 50, 50), on_btn_retry);
-    create_small_btn(s_btns_fail, "重新配網", lv_color_make(50, 50, 50), on_btn_reprov);
-    create_small_btn(s_btns_fail, "跳過",     lv_color_make(35, 35, 35), on_btn_skip);
+    create_small_btn(s_btns_fail, "重試",     lv_color_make(50, 50, 50),  on_btn_retry);
+    create_small_btn(s_btns_fail, "重新啟動", lv_color_make(50, 50, 50),  on_btn_prov_restart);
+    create_small_btn(s_btns_fail, "跳過",     lv_color_make(35, 35, 35),  on_btn_skip);
 }
 
 static void build_panel_prov(void)
@@ -540,6 +612,7 @@ void module_ui_network_show(void)
     lv_obj_clear_flag(s_scr, LV_OBJ_FLAG_SCROLLABLE);
 
     build_panel_select();
+    build_panel_confirm();
     build_panel_connect();
     build_panel_prov();
 
