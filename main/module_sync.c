@@ -104,8 +104,8 @@ static void sync_task(void *arg)
             .hour    = t.tm_hour,
             .minute  = t.tm_min,
             .second  = t.tm_sec,
-            // tm_wday: 0=日，轉換為 1(一)–7(日) ISO 8601
-            .weekday = t.tm_wday == 0 ? 7 : t.tm_wday,
+            // tm_wday: 0=日…6=六，轉換為 DS3231 慣例 1=週日…7=週六
+            .weekday = (uint8_t)(t.tm_wday + 1),
         };
 
         ret = module_time_set(&rtc);
