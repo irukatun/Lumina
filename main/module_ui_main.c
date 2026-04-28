@@ -15,6 +15,7 @@
 #include "module_imu.h"
 #include "module_pir.h"
 #include "module_sync.h"
+#include "module_alarm.h"
 #include "module_ui_alarm.h"
 #include "module_ui_main.h"
 
@@ -91,6 +92,7 @@ static void      clock_timer_cb(lv_timer_t *timer);
 static void      on_imu_event(imu_event_t event);
 static void      on_pir_event(pir_event_t event);
 static void      on_sync_event(module_sync_status_t status);
+static void      on_alarm_triggered(int slot, const alarm_t *a);
 static void      on_time_clicked(lv_event_t *e);
 
 // ======================================================================
@@ -152,14 +154,24 @@ static void clock_timer_cb(lv_timer_t *timer)
     }
 
     // DS3231 溫度暫存器每 64 秒更新一次，以 60 個 tick 為週期讀取
+    // 同時更新下一個鬧鐘提示
     static int s_temp_tick = 0;
     if (++s_temp_tick >= 60) {
         s_temp_tick = 0;
         float temp;
-        char buf[16];
+        char buf[32];
         if (module_time_get_temp(&temp) == ESP_OK) {
             snprintf(buf, sizeof(buf), "%.1f°C", temp);
             lv_label_set_text(s_lbl_temp_val, buf);
+        }
+        if (s_lbl_alarm) {
+            alarm_t next;
+            if (module_alarm_get_next(&next, NULL)) {
+                snprintf(buf, sizeof(buf), "下一個鬧鐘  %02d:%02d", next.hour, next.minute);
+            } else {
+                snprintf(buf, sizeof(buf), "您目前沒有下一個鬧鐘");
+            }
+            lv_label_set_text(s_lbl_alarm, buf);
         }
     }
 }
@@ -191,6 +203,15 @@ static void on_imu_event(imu_event_t event)
         default:
             break;
     }
+    lvgl_port_unlock();
+}
+
+// 由 alarm_task 呼叫（LVGL 外部，需加鎖）
+static void on_alarm_triggered(int slot, const alarm_t *a)
+{
+    (void)slot;
+    lvgl_port_lock(0);
+    module_ui_alarm_trigger_open(a->hour, a->minute);
     lvgl_port_unlock();
 }
 
@@ -485,6 +506,7 @@ void module_ui_main_show(void)
     module_imu_add_callback(on_imu_event);
     module_pir_add_callback(on_pir_event);
     module_sync_add_callback(on_sync_event);
+    module_alarm_add_trigger_cb(on_alarm_triggered);
 
     ESP_LOGI(TAG, "主畫面就緒");
 }
@@ -494,6 +516,7 @@ void module_ui_main_destroy(void)
     module_imu_remove_callback(on_imu_event);
     module_pir_remove_callback(on_pir_event);
     module_sync_remove_callback(on_sync_event);
+    module_alarm_remove_trigger_cb(on_alarm_triggered);
 
     lvgl_port_lock(0);
 

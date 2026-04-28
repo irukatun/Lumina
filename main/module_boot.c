@@ -19,6 +19,7 @@
 #include "module_imu.h"
 #include "module_pir.h"
 #include "module_network.h"
+#include "module_alarm.h"
 
 // 日誌標籤
 static const char *TAG = "M_Boot";
@@ -107,6 +108,13 @@ esp_err_t module_boot_run(void)
     module_ui_boot_set_status("正在初始化人體感測器...");
     module_pir_init();
     module_ui_boot_set_progress(60);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    LOG_HEAP();
+
+    // 鬧鐘模組初始化（從 NVS 載入資料、啟動背景任務）
+    module_ui_boot_set_status("正在載入鬧鐘設定...");
+    module_alarm_init();
+    module_ui_boot_set_progress(65);
     vTaskDelay(pdMS_TO_TICKS(200));
     LOG_HEAP();
 

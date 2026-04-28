@@ -11,7 +11,9 @@ idf_component_register(
         module_time.c
         module_ui_boot.c
         module_ui_main.c
+        module_alarm.c
         module_ui_alarm.c
+        module_ui_alarm_edit.c
         module_network.c
         module_sync.c
         module_weather.c
